@@ -40,7 +40,7 @@ import {
 } from "@mui/icons-material";
 import {Link, useLocation} from "react-router-dom";
 import ValetudoEvents from "./ValetudoEvents";
-import {Capability, useDuststreamingConfigurationQuery} from "../api";
+import {Capability, useDuststreamingConfigurationQuery, useValetudoUserProfileQuery} from "../api";
 import {useCapabilitiesSupported} from "../CapabilitiesProvider";
 import {
     RobotMonochromeIcon,
@@ -48,6 +48,7 @@ import {
     ValetudoMonochromeIcon,
     ValetudoHeartMonochromeIcon
 } from "./CustomIcons";
+import ValetudoUser from "./ValetudoUser";
 
 interface MenuEntry {
     kind: "MenuEntry";
@@ -59,6 +60,7 @@ interface MenuEntry {
         capabilities: Capability[];
         type: "allof" | "anyof"
     };
+    requiredGroup?: "admin" | "user";
 }
 
 interface MenuSubEntry {
@@ -66,11 +68,13 @@ interface MenuSubEntry {
     route: string,
     title: string,
     parentRoute: string
+    requiredGroup?: "admin" | "user";
 }
 
 interface MenuSubheader {
     kind: "Subheader";
     title: string;
+    requiredGroup?: "admin" | "user";
     requiredCapabilities?: {
         capabilities: Capability[];
         type: "allof" | "anyof"
@@ -148,7 +152,8 @@ const menuTree: Array<MenuEntry | MenuSubEntry | MenuSubheader> = [
     },
     {
         kind: "Subheader",
-        title: "Options"
+        title: "Options",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuEntry",
@@ -169,19 +174,22 @@ const menuTree: Array<MenuEntry | MenuSubEntry | MenuSubheader> = [
                 Capability.MapAnnotations
             ],
             type: "anyof"
-        }
+        },
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
         route: "/options/map_management/segments",
         title: "Segment Management",
-        parentRoute: "/options/map_management"
+        parentRoute: "/options/map_management",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
         route: "/options/map_management/virtual_restrictions",
         title: "Virtual Restriction Management",
-        parentRoute: "/options/map_management"
+        parentRoute: "/options/map_management",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
@@ -193,7 +201,8 @@ const menuTree: Array<MenuEntry | MenuSubEntry | MenuSubheader> = [
         kind: "MenuSubEntry",
         route: "/options/map_management/robot_coverage",
         title: "Robot Coverage Map",
-        parentRoute: "/options/map_management"
+        parentRoute: "/options/map_management",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
@@ -206,63 +215,73 @@ const menuTree: Array<MenuEntry | MenuSubEntry | MenuSubheader> = [
         route: "/options/connectivity",
         title: "Connectivity Options",
         menuIcon: ConnectivityIcon,
-        menuText: "Connectivity"
+        menuText: "Connectivity",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
         route: "/options/connectivity/auth",
         title: "Auth Settings",
-        parentRoute: "/options/connectivity"
+        parentRoute: "/options/connectivity",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
         route: "/options/connectivity/mqtt",
         title: "MQTT Connectivity",
-        parentRoute: "/options/connectivity"
+        parentRoute: "/options/connectivity",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
         route: "/options/connectivity/networkadvertisement",
         title: "Network Advertisement",
-        parentRoute: "/options/connectivity"
+        parentRoute: "/options/connectivity",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
         route: "/options/connectivity/ntp",
         title: "NTP Connectivity",
-        parentRoute: "/options/connectivity"
+        parentRoute: "/options/connectivity",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
         route: "/options/connectivity/wifi",
         title: "Wi-Fi Connectivity",
-        parentRoute: "/options/connectivity"
+        parentRoute: "/options/connectivity",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuEntry",
         route: "/options/robot",
         title: "Robot Options",
         menuIcon: RobotMonochromeIcon,
-        menuText: "Robot"
+        menuText: "Robot",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
         route: "/options/robot/system",
         title: "System Options",
-        parentRoute: "/options/robot"
+        parentRoute: "/options/robot",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
         route: "/options/robot/quirks",
         title: "Quirks",
-        parentRoute: "/options/robot"
+        parentRoute: "/options/robot",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuEntry",
         route: "/options/valetudo",
         title: "Valetudo Options",
         menuIcon: ValetudoMonochromeIcon,
-        menuText: "Valetudo"
+        menuText: "Valetudo",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuSubEntry",
@@ -272,58 +291,68 @@ const menuTree: Array<MenuEntry | MenuSubEntry | MenuSubheader> = [
     },
     {
         kind: "Subheader",
-        title: "Misc"
+        title: "Misc",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuEntry",
         route: "/valetudo/timers",
         title: "Timers",
         menuIcon: TimeIcon,
-        menuText: "Timers"
+        menuText: "Timers",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuEntry",
         route: "/valetudo/log",
         title: "Log",
         menuIcon: LogIcon,
-        menuText: "Log"
+        menuText: "Log",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuEntry",
         route: "/valetudo/updater",
         title: "Updater",
         menuIcon: UpdaterIcon,
-        menuText: "Updater"
+        menuText: "Updater",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuEntry",
         route: "/valetudo/system_information",
         title: "System Information",
         menuIcon: SystemInformationIcon,
-        menuText: "System Information"
+        menuText: "System Information",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuEntry",
         route: "/valetudo/ai",
         title: "AI Assistant",
         menuIcon: AiIcon,
-        menuText: "AI Assistant"
+        menuText: "AI Assistant",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuEntry",
         route: "/valetudo/help",
         title: "General Help",
         menuIcon: HelpIcon,
-        menuText: "General Help"
+        menuText: "General Help",
+        requiredGroup: "admin"
     },
     {
         kind: "MenuEntry",
         route: "/valetudo/about",
         title: "About Valetudo",
         menuIcon: AboutIcon,
-        menuText: "About Valetudo"
+        menuText: "About Valetudo",
+        requiredGroup: "admin"
     },
 ];
+
+
 
 const ValetudoAppBar: React.FunctionComponent<{ paletteMode: PaletteMode, setPaletteMode: (newMode: PaletteMode) => void }> = ({
     paletteMode,
@@ -341,6 +370,25 @@ const ValetudoAppBar: React.FunctionComponent<{ paletteMode: PaletteMode, setPal
         enabled: duststreamingSupported
     });
     const duststreamingEnabled = duststreamingConfiguration?.enabled === true;
+
+    const {
+        data: userProfileData,
+        isPending: userProfilePending,
+        isError: userProfileError,
+    } = useValetudoUserProfileQuery();
+
+    const groups = React.useMemo(() => {
+        if (!userProfilePending) {
+            if (userProfileError) {
+                return {
+                    roles: []
+                };
+            }
+        }
+        return {
+            roles: userProfileData?.roles ?? []
+        };
+    }, [userProfileData, userProfileError, userProfilePending]);
 
     //@ts-ignore
     const currentMenuEntry = menuTree.find(element => element.route === currentLocation) ?? menuTree[0];
@@ -390,6 +438,9 @@ const ValetudoAppBar: React.FunctionComponent<{ paletteMode: PaletteMode, setPal
                     }).map((value, idx) => {
                         switch (value.kind) {
                             case "Subheader":
+                                if (value.requiredGroup !== undefined && !groups.roles.includes(value.requiredGroup)) {
+                                    return null;
+                                }
                                 if (value.requiredCapabilities) {
                                     switch (value.requiredCapabilities.type) {
                                         case "allof": {
@@ -435,6 +486,9 @@ const ValetudoAppBar: React.FunctionComponent<{ paletteMode: PaletteMode, setPal
                                     return null;
                                 }
 
+                                if (value.requiredGroup !== undefined && !groups.roles.includes(value.requiredGroup)) {
+                                    return null;
+                                }
                                 if (value.requiredCapabilities) {
                                     switch (value.requiredCapabilities.type) {
                                         case "allof": {
@@ -563,7 +617,7 @@ const ValetudoAppBar: React.FunctionComponent<{ paletteMode: PaletteMode, setPal
                 </List>
             </Box>
         );
-    }, [currentLocation, paletteMode, setPaletteMode, robotCapabilities, duststreamingEnabled]);
+    }, [currentLocation, paletteMode, setPaletteMode, robotCapabilities, duststreamingEnabled, groups.roles]);
 
     const toolbarContent = React.useMemo(() => {
         switch (currentMenuEntry.kind) {
@@ -625,6 +679,7 @@ const ValetudoAppBar: React.FunctionComponent<{ paletteMode: PaletteMode, setPal
                     {toolbarContent}
                     <div>
                         <ValetudoEvents/>
+                        <ValetudoUser/>
                     </div>
                 </Toolbar>
             </AppBar>

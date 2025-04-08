@@ -153,6 +153,7 @@ import {
     fetchAutoEmptyDockAutoEmptyDurationControlProperties,
     fetchMapAnnotationsProperties,
     sendMapAnnotationsUpdate,
+    fetchUserProfile,
 } from "./client";
 import {
     PresetSelectionState,
@@ -276,6 +277,7 @@ enum QueryKey {
     AutoEmptyDockAutoEmptyDurationControl = "auto_empty_dock_auto_empty_duration_control",
     AutoEmptyDockAutoEmptyDurationControlProperties = "auto_empty_dock_auto_empty_duration_control_properties",
     MapAnnotationsProperties = "map_annotations_properties",
+    UserProfile = "user_profile"
 }
 
 const useOnCommandError = (capability: Capability | string): ((error: unknown) => void) => {
@@ -1897,5 +1899,15 @@ export const useMapAnnotationsMutation = (
             await queryClient.invalidateQueries({ queryKey: [QueryKey.Map] });
             await options?.onSuccess?.(data, ...args);
         },
+    });
+};
+
+export const useValetudoUserProfileQuery = () => {
+    return useQuery( {
+        queryKey: [QueryKey.UserProfile],
+        queryFn: fetchUserProfile,
+
+        staleTime: 30_000,
+        refetchInterval: 30_000
     });
 };

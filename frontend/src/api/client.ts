@@ -66,7 +66,7 @@ import {
     TimerInformation,
     TimerProperties,
     UpdaterConfiguration,
-    UpdaterState,
+    UpdaterState, UserProfile,
     ValetudoCustomizations,
     ValetudoDataPoint,
     ValetudoEvent,
@@ -1263,6 +1263,14 @@ export const sendDuststreamingConfiguration = async (configuration: Duststreamin
             if (status !== 200) {
                 throw new Error("Could not update dust streaming configuration");
             }
+        });
+};
+
+export const fetchUserProfile = async (): Promise<UserProfile> => {
+    return valetudoAPI
+        .get<UserProfile>("/profile")
+        .then(({ data }) => {
+            return data;
         });
 };
 

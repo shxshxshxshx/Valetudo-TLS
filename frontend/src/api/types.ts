@@ -693,3 +693,11 @@ export interface AutoEmptyDockAutoEmptyDurationPayload {
 export interface AutoEmptyDockAutoEmptyDurationControlProperties {
     supportedDurations: Array<AutoEmptyDockAutoEmptyDuration>,
 }
+
+export interface UserProfile {
+    name: string,
+    email: string,
+    avatar: string,
+    roles: string[],
+    ssoEnabled: boolean
+}
