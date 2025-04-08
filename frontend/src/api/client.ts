@@ -48,7 +48,7 @@ import {
     TimerInformation,
     TimerProperties,
     UpdaterConfiguration,
-    UpdaterState,
+    UpdaterState, UserProfile,
     ValetudoCustomizations,
     ValetudoDataPoint,
     ValetudoEvent,
@@ -1139,6 +1139,14 @@ export const sendObstacleImagesState = async (enable: boolean): Promise<void> =>
 export const fetchObstacleImagesProperties = async (): Promise<ObstacleImagesProperties> => {
     return valetudoAPI
         .get<ObstacleImagesProperties>(`/robot/capabilities/${Capability.ObstacleImages}/properties`)
+        .then(({ data }) => {
+            return data;
+        });
+};
+
+export const fetchUserProfile = async (): Promise<UserProfile> => {
+    return valetudoAPI
+        .get<UserProfile>("/profile")
         .then(({ data }) => {
             return data;
         });

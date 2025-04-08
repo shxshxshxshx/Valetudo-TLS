@@ -43,6 +43,7 @@
     "express-basic-auth": "1.2.1",
     "express-dynamic-middleware": "1.0.0",
     "express-list-endpoints": "7.1.0",
+    "express-openid-connect": "^2.17.1",
     "express-rate-limit": "7.4.1",
     "hashlru": "git+https://npm@github.com/Hypfer/hashlru#3.0.0",
     "is-in-subnet": "4.0.1",

@@ -30,14 +30,22 @@
             "additionalProperties": false,
             "required": [
               "port",
-              "basicAuth"
+              "baseUrl",
+              "ssl",
+              "auth"
             ],
             "properties": {
               "port": {
                 "type": "number"
               },
-              "basicAuth": {
-                "$ref": "#/components/schemas/BasicAuthConfigDTO"
+              "baseUrl": {
+                "type": "string"
+              },
+              "ssl": {
+                "$ref": "#/components/schemas/SslConfigDTO"
+              },
+              "auth": {
+                "$ref": "#/components/schemas/AuthConfigDTO"
               },
               "blockExternalAccess": {
                 "type": "boolean"
@@ -289,6 +297,101 @@
           }
         }
       },
+      "SslConfigDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "enabled",
+          "keyLocation",
+          "certLocation"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "keyLocation": {
+            "type": "string"
+          },
+          "certLocation": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthConfigDTO": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "basicAuth",
+          "sso"
+        ],
+        "properties": {
+          "basicAuth": {
+            "$ref": "#/components/schemas/BasicAuthConfigDTO"
+          },
+          "sso": {
+            "$ref": "#/components/schemas/SsoConfigDTO"
+          }
+        }
+      },
+      "SsoConfigDTO": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "oidc"
+        ],
+        "properties": {
+          "oidc": {
+            "$ref": "#/components/schemas/OidcConfigDTO"
+          }
+        }
+      },
+      "OidcConfigDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "enabled",
+          "issuer",
+          "clientId",
+          "clientSecret"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string"
+          },
+          "clientSecret": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "tokenSigningAlgorithm": {
+            "type": "string"
+          },
+          "groupMap": {
+            "type": "object",
+            "properties": {
+              "admin": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "user": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
       "BasicAuthConfigDTO": {
         "type": "object",
         "additionalProperties": false,
@@ -495,3 +598,4 @@
     }
   }
 }
+

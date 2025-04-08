@@ -581,3 +581,11 @@ export interface ObstacleImagesProperties {
         height: number
     }
 }
+
+export interface UserProfile {
+    name: string,
+    email: string,
+    avatar: string,
+    roles: string[],
+    ssoEnabled: boolean
+}

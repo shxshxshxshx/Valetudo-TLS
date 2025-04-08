@@ -121,7 +121,7 @@ import {
     fetchAutoEmptyDockAutoEmptyIntervalProperties,
     fetchObstacleImagesProperties,
     fetchObstacleImagesState,
-    sendObstacleImagesState,
+    sendObstacleImagesState, fetchUserProfile,
 } from "./client";
 import {
     PresetSelectionState,
@@ -218,7 +218,8 @@ enum QueryKey {
     CarpetSensorMode = "carpet_sensor_mode",
     CarpetSensorModeProperties = "carpet_sensor_mode_properties",
     ObstacleImages = "obstacle_image",
-    ObstacleImagesProperties = "obstacle_image_properties"
+    ObstacleImagesProperties = "obstacle_image_properties",
+    UserProfile = "user_profile"
 }
 
 const useOnCommandError = (capability: Capability | string): ((error: unknown) => void) => {
@@ -1515,4 +1516,14 @@ export const prefetchObstacleImagesProperties = async (queryClient : QueryClient
             queryFn: fetchObstacleImagesProperties,
         });
     }
+};
+
+export const useValetudoUserProfileQuery = () => {
+    return useQuery( {
+        queryKey: [QueryKey.UserProfile],
+        queryFn: fetchUserProfile,
+
+        staleTime: 30_000,
+        refetchInterval: 30_000
+    });
 };
