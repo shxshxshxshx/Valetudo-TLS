@@ -121,7 +121,10 @@ import {
     fetchAutoEmptyDockAutoEmptyIntervalProperties,
     fetchObstacleImagesProperties,
     fetchObstacleImagesState,
-    sendObstacleImagesState, fetchUserProfile,
+    sendObstacleImagesState,
+    fetchHighResolutionManualControlState,
+    sendHighResolutionManualControlInteraction,
+    fetchUserProfile,
 } from "./client";
 import {
     PresetSelectionState,
@@ -137,6 +140,7 @@ import {
     CombinedVirtualRestrictionsUpdateRequestParameters,
     ConsumableId,
     DoNotDisturbConfiguration,
+    HighResolutionManualControlInteraction,
     HTTPBasicAuthConfiguration,
     ManualControlInteraction,
     MapSegmentationActionRequestParameters,
@@ -204,6 +208,7 @@ enum QueryKey {
     WifiScan = "wifi_scan",
     ManualControl = "manual_control",
     ManualControlProperties = "manual_control_properties",
+    HighResolutionManualControl = "high_resolution_manual_control",
     CombinedVirtualRestrictionsProperties = "combined_virtual_restrictions_properties",
     UpdaterConfiguration = "updater_configuration",
     UpdaterState = "updater_state",
@@ -1227,9 +1232,37 @@ export const useManualControlInteraction = () => {
     return useValetudoFetchingMutation({
         queryKey: [QueryKey.ManualControl],
         mutationFn: (interaction: ManualControlInteraction) => {
-            return sendManualControlInteraction(interaction).then(fetchManualControlState);
+            return sendManualControlInteraction(interaction).then(() => {
+                if (interaction.action !== "move") {
+                    return fetchManualControlState();
+                }
+            });
         },
         onError: useOnCommandError(Capability.ManualControl)
+    });
+};
+
+export const useHighResolutionManualControlStateQuery = () => {
+    return useQuery({
+        queryKey: [QueryKey.HighResolutionManualControl],
+        queryFn: fetchHighResolutionManualControlState,
+
+        staleTime: 10_000,
+        refetchInterval: 10_000
+    });
+};
+
+export const useHighResolutionManualControlInteraction = () => {
+    return useValetudoFetchingMutation({
+        queryKey: [QueryKey.HighResolutionManualControl],
+        mutationFn: (interaction: HighResolutionManualControlInteraction) => {
+            return sendHighResolutionManualControlInteraction(interaction).then(() => {
+                if (interaction.action !== "move") {
+                    return fetchHighResolutionManualControlState();
+                }
+            });
+        },
+        onError: useOnCommandError(Capability.HighResolutionManualControl)
     });
 };
 
