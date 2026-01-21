@@ -130,9 +130,12 @@ To get the password, use the following [Calculator](https://gchq.github.io/Cyber
 or enter the full SN (all uppercase) into this shell command
 `echo -n "P20290000US00000ZM" | md5sum | base64`
 
+If your Dreame is Xiaomi-branded, your SN might instead look similar to `41717/BFACWF3Z000000`.<br/>
+In that case, use the full string including the `41717/` part as the SN.
+
 #### Phase 3: Installing the patched Firmware + Valetudo
 
-Once logged in, build a patched firmware image for manual installation via the [Dustbuilder](https://builder.dontvacuum.me).
+Once logged in, build a patched firmware image for manual installation via the <a href="https://builder.dontvacuum.me" rel="noopener" target="_blank">Dustbuilder</a>.
 **Make sure that both `Prepackage valetudo` and `Patch DNS` are selected before clicking on `Create Job`.**
 You will receive an email once it's built. Download the `tar.gz` file from the link in that mail to your laptop.
 
@@ -216,8 +219,8 @@ Now continue with the [getting started guide](https://valetudo.cloud/pages/gener
 This method abuses the proprietary Allwinner LiveSuit tool for Linux with somewhat hacked LiveSuit images.
 Because of that, it's a bit janky. You will also need some advanced linux knowledge.
 
-This Guide assumes that you have just installed a fresh copy of Debian Bookworm with some kind of GUI (e.g. KDE).<br/>
-Please use a native install for this, as VMs will usually be troublesome.
+This Guide assumes that you have booted a fresh copy of Debian 13 Live with some kind of GUI (e.g. KDE).<br/>
+Please use a native environment for this, as VMs will usually be troublesome.
 
 <div class="alert alert-important" role="alert">
   <p>

@@ -1,4 +1,4 @@
-const uuid = require("uuid");
+const crypto = require("crypto");
 
 const MapLayer = require("./MapLayer");
 const SerializableEntity = require("../SerializableEntity");
@@ -37,7 +37,7 @@ class ValetudoMap extends SerializableEntity { //TODO: Current, Historic, Etc.
         this.entities = [];
 
         this.metaData.version = 2;
-        this.metaData.nonce = uuid.v4();
+        this.metaData.nonce = crypto.randomUUID();
 
         this.metaData.totalLayerArea = 0;
 
@@ -97,12 +97,14 @@ class ValetudoMap extends SerializableEntity { //TODO: Current, Historic, Etc.
                 let id = e.metaData.segmentId;
 
                 if (typeof id === "number") {
+                    // @ts-ignore
                     id = id.toString();
                 }
 
                 return new ValetudoMapSegment({
                     id: id,
-                    name: e.metaData.name
+                    name: e.metaData.name,
+                    material: e.metaData.material
                 });
             });
     }

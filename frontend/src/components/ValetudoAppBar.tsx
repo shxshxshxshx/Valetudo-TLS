@@ -35,6 +35,7 @@ import {
     Wysiwyg as SystemInformationIcon,
     Info as AboutIcon,
     Help as HelpIcon,
+    SmartToy as AiIcon,
     SvgIconComponent
 } from "@mui/icons-material";
 import {Link, useLocation} from "react-router-dom";
@@ -73,6 +74,10 @@ interface MenuSubheader {
     kind: "Subheader";
     title: string;
     requiredGroup?: "admin" | "user";
+    requiredCapabilities?: {
+        capabilities: Capability[];
+        type: "allof" | "anyof"
+    };
 }
 
 
@@ -88,7 +93,16 @@ const menuTree: Array<MenuEntry | MenuSubEntry | MenuSubheader> = [
     },
     {
         kind: "Subheader",
-        title: "Robot"
+        title: "Robot",
+        requiredCapabilities: {
+            capabilities: [
+                Capability.ConsumableMonitoring,
+                Capability.ManualControl,
+                Capability.HighResolutionManualControl,
+                Capability.TotalStatistics
+            ],
+            type: "anyof"
+        }
     },
     {
         kind: "MenuEntry",
@@ -282,6 +296,14 @@ const menuTree: Array<MenuEntry | MenuSubEntry | MenuSubheader> = [
     },
     {
         kind: "MenuEntry",
+        route: "/valetudo/ai",
+        title: "AI Assistant",
+        menuIcon: AiIcon,
+        menuText: "AI Assistant",
+        requiredGroup: "admin"
+    },
+    {
+        kind: "MenuEntry",
         route: "/valetudo/help",
         title: "General Help",
         menuIcon: HelpIcon,
@@ -374,10 +396,35 @@ const ValetudoAppBar: React.FunctionComponent<{ paletteMode: PaletteMode, setPal
                         return item.kind !== "MenuSubEntry";
                     }).map((value, idx) => {
                         switch (value.kind) {
-                            case "Subheader": {
+                            case "Subheader":
                                 if (value.requiredGroup !== undefined && !groups.roles.includes(value.requiredGroup)) {
                                     return null;
                                 }
+                                if (value.requiredCapabilities) {
+                                    switch (value.requiredCapabilities.type) {
+                                        case "allof": {
+                                            if (!value.requiredCapabilities.capabilities.every(capability => {
+                                                const idx = Object.values(Capability).indexOf(capability);
+                                                return robotCapabilities[idx];
+                                            })) {
+                                                return null;
+                                            }
+
+                                            break;
+                                        }
+                                        case "anyof": {
+                                            if (!value.requiredCapabilities.capabilities.some(capability => {
+                                                const idx = Object.values(Capability).indexOf(capability);
+                                                return robotCapabilities[idx];
+                                            })) {
+                                                return null;
+                                            }
+
+                                            break;
+                                        }
+                                    }
+                                }
+
                                 return (
                                     <ListSubheader
                                         key={`${idx}`}
@@ -387,7 +434,6 @@ const ValetudoAppBar: React.FunctionComponent<{ paletteMode: PaletteMode, setPal
                                         {value.title}
                                     </ListSubheader>
                                 );
-                            }
 
                             case "MenuEntry": {
                                 if (value.requiredGroup !== undefined && !groups.roles.includes(value.requiredGroup)) {

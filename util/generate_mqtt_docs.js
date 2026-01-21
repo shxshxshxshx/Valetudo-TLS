@@ -1,5 +1,5 @@
 /* eslint-disable */
-const MockRobot = require("../backend/lib/robots/mock/MockRobot");
+const MockValetudoRobot = require("../backend/lib/robots/mock/MockValetudoRobot");
 const RobotMqttHandle = require("../backend/lib/mqtt/handles/RobotMqttHandle");
 const MqttController = require("../backend/lib/mqtt/MqttController");
 const CapabilityMqttHandle = require("../backend/lib/mqtt/capabilities/CapabilityMqttHandle");
@@ -8,7 +8,7 @@ const RobotStateNodeMqttHandle = require("../backend/lib/mqtt/handles/RobotState
 const MapNodeMqttHandle = require("../backend/lib/mqtt/handles/MapNodeMqttHandle");
 const ValetudoEventsNodeMqttHandle = require("../backend/lib/mqtt/handles/ValetudoEventsNodeMqttHandle");
 const MockConsumableMonitoringCapability = require("../backend/lib/robots/mock/capabilities/MockConsumableMonitoringCapability");
-const ConsumableStateAttribute = require("../backend/lib/entities/state/attributes/ConsumableStateAttribute");
+const ValetudoConsumable = require("../backend/lib/entities/core/ValetudoConsumable");
 const ValetudoMapSegment = require("../backend/lib/entities/core/ValetudoMapSegment");
 const PropertyMqttHandle = require("../backend/lib/mqtt/handles/PropertyMqttHandle");
 const DataType = require("../backend/lib/mqtt/homie/DataType");
@@ -136,23 +136,41 @@ ConsumableMonitoringCapabilityMqttHandle.prototype.genConsumableFriendlyName = (
 class FakeMqttController extends MqttController {
     // @ts-ignore
     constructor() {
-        const robot = new MockRobot({config: fakeConfig, valetudoEventStore: eventStore});
+        const robot = new MockValetudoRobot({config: fakeConfig, valetudoEventStore: eventStore});
 
         robot.capabilities[ConsumableMonitoringCapability.TYPE].getProperties = () => {
             return {
                 availableConsumables: [
                     {
                         type: "<CONSUMABLE-MINUTES>",
-                        subType: ConsumableStateAttribute.SUB_TYPE.NONE,
-                        unit: ConsumableStateAttribute.UNITS.MINUTES
+                        subType: ValetudoConsumable.SUB_TYPE.NONE,
+                        unit: ValetudoConsumable.UNITS.MINUTES
                     },
                     {
                         type: "<CONSUMABLE-PERCENT>",
-                        subType: ConsumableStateAttribute.SUB_TYPE.NONE,
-                        unit: ConsumableStateAttribute.UNITS.PERCENT
+                        subType: ValetudoConsumable.SUB_TYPE.NONE,
+                        unit: ValetudoConsumable.UNITS.PERCENT
                     },
                 ]
             };
+        }
+        robot.capabilities[ConsumableMonitoringCapability.TYPE].getConsumables = () => {
+            return [
+                new ValetudoConsumable({
+                    type: "<CONSUMABLE-MINUTES>",
+                    remaining: {
+                        value: 492,
+                        unit: ValetudoConsumable.UNITS.MINUTES
+                    }
+                }),
+                new ValetudoConsumable({
+                    type: "<CONSUMABLE-PERCENT>",
+                    remaining: {
+                        value: 59,
+                        unit: ValetudoConsumable.UNITS.PERCENT
+                    }
+                })
+            ]
         }
         
         robot.state.map.getSegments = () => {
@@ -235,20 +253,6 @@ class FakeMqttController extends MqttController {
             new PresetSelectionStateAttribute({
                 type: PresetSelectionStateAttribute.TYPE.WATER_GRADE,
                 value: PresetSelectionStateAttribute.INTENSITY.MIN
-            }),
-            new ConsumableStateAttribute({
-                type: "<CONSUMABLE-MINUTES>",
-                remaining: {
-                    value: 492,
-                    unit: ConsumableStateAttribute.UNITS.MINUTES
-                }
-            }),
-            new ConsumableStateAttribute({
-                type: "<CONSUMABLE-PERCENT>",
-                remaining: {
-                    value: 59,
-                    unit: ConsumableStateAttribute.UNITS.PERCENT
-                }
             })
         ];
         for (const attr of attributes) {
@@ -319,16 +323,24 @@ class FakeMqttController extends MqttController {
             this.addedConsumables.push(handle.friendlyName);
         }
 
-        let title = handle.friendlyName;
+        const baseTitle = handle.friendlyName;
+        let titleSuffix = "";
+
         if (handle instanceof CapabilityMqttHandle) {
-            title += ` (\`${handle.capability.getType()}\`)`;
+            titleSuffix = ` (\`${handle.capability.getType()}\`)`;
         } else if (handle instanceof RobotStateNodeMqttHandle) {
-            title += ` (\`${handle.getInterestingStatusAttributes()[0].attributeClass}\`)`;
+            titleSuffix = ` (\`${handle.getInterestingStatusAttributes()[0].attributeClass}\`)`;
         } else if (handle instanceof PropertyMqttHandle) {
-            title += ` (\`${handle.topicName}\`)`;
+            titleSuffix = ` (\`${handle.topicName}\`)`;
         }
-        const anchor = this.generateAnchor(title);
-        markdown += `${"#".repeat(markdownLevel)} ${title} <a id="${anchor}" />` + "\n\n";
+        
+        const unescapedFullTitle = baseTitle + titleSuffix;
+        const anchor = this.generateAnchor(unescapedFullTitle);
+        
+        const escapedBaseTitle = baseTitle.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const finalDisplayTitle = escapedBaseTitle + titleSuffix;
+
+        markdown += `${"#".repeat(markdownLevel)} ${finalDisplayTitle} <a id="${anchor}" />` + "\n\n";
 
         let homieType = "Handle";
         const attributes = [];
@@ -357,7 +369,7 @@ class FakeMqttController extends MqttController {
             attributes.push(`capability: [${handle.capability.getType()}](/pages/usage/capabilities-overview.html#${this.generateAnchor(handle.capability.getType())})`);
         }
         markdown += `*${attributes.join(", ")}*` + "\n\n";
-        
+
         if (handle.constructor.OPTIONAL === true) {
             markdown += `**Note:** This is an optional exposed capability handle and thus will only be available via MQTT if enabled in the Valetudo configuration.\n\n`;
         }
@@ -486,10 +498,16 @@ class FakeMqttController extends MqttController {
                 if (component.componentType === "vacuum") {
                     component.friendlyName = "Vacuum";
                 }
-                markdown += "- " + (component.friendlyName ?? component.name ?? component.componentId) +
-                    ` ([\`${component.componentType}.mqtt\`](https://www.home-assistant.io/integrations/${component.componentType}.mqtt/))\n`;
-                const compTitle = (component.friendlyName ?? component.name ?? component.componentId) + ` (\`${component.componentType}.mqtt\`)`;
-                hassComponentAnchors[compTitle] = anchor;
+
+                const componentBaseName = (component.friendlyName ?? component.name ?? component.componentId);
+                const componentSuffix = ` ([\`${component.componentType}.mqtt\`](https://www.home-assistant.io/integrations/${component.componentType}.mqtt/))`;
+                const componentIndexSuffix = ` (\`${component.componentType}.mqtt\`)`;
+                
+                const escapedComponentBaseName = componentBaseName.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                markdown += "- " + escapedComponentBaseName + componentSuffix + "\n";
+                
+                const hassComponentIndexKey = escapedComponentBaseName + componentIndexSuffix;
+                hassComponentAnchors[hassComponentIndexKey] = anchor;
             }
             markdown += "\n";
         }
@@ -511,7 +529,7 @@ class FakeMqttController extends MqttController {
         return {
             markdown: markdown,
             anchors: {
-                title: title,
+                title: finalDisplayTitle,
                 anchor: anchor,
                 children: childAnchors
             },

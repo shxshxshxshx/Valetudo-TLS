@@ -15,7 +15,7 @@ import {
 import {Capability, useTotalStatisticsQuery, ValetudoDataPoint} from "../api";
 import {useCapabilitiesSupported} from "../CapabilitiesProvider";
 import PaperContainer from "../components/PaperContainer";
-import {adjustColorBrightness, getFriendlyStatName, getHumanReadableStatValue} from "../utils";
+import {adjustHexColorBrightness, getFriendlyStatName, getHumanReadableStatValue} from "../utils";
 import {History as HistoryIcon} from "@mui/icons-material";
 import {StatisticsAchievement, statisticsAchievements} from "./res/StatisticsAchievements";
 import {useIsMobileView} from "../hooks";
@@ -38,9 +38,9 @@ const achievementColors = {
     }
 };
 achievementColors.dark = {
-    foreground: adjustColorBrightness(achievementColors.light.foreground, -20),
-    text: adjustColorBrightness(achievementColors.light.foreground, -5),
-    background: adjustColorBrightness(achievementColors.light.background, -20),
+    foreground: adjustHexColorBrightness(achievementColors.light.foreground, -20),
+    text: adjustHexColorBrightness(achievementColors.light.foreground, -5),
+    background: adjustHexColorBrightness(achievementColors.light.background, -20),
 };
 
 const StatisticsGridItem: React.FunctionComponent<{ dataPoint: ValetudoDataPoint}> = ({ dataPoint}): React.ReactElement => {
@@ -81,7 +81,7 @@ const StatisticsGridItem: React.FunctionComponent<{ dataPoint: ValetudoDataPoint
                                         }}
                                     >
                                         <Typography sx={{fontSize: 14}} color="text.secondary" gutterBottom>
-                                            {getFriendlyStatName(dataPoint)}
+                                            {`Total ${getFriendlyStatName(dataPoint)}`}
                                         </Typography>
                                         <Typography variant="h5" component="div">
                                             {getHumanReadableStatValue(dataPoint)}
@@ -124,7 +124,8 @@ const StatisticsGridItem: React.FunctionComponent<{ dataPoint: ValetudoDataPoint
                                 title: "?",
                                 description: "Not yet achieved"
                             };
-                            const achievementToDisplay = dataPoint.value >= achievement.value ? achievement : notYetAchievedAchievement;
+                            const achieved = dataPoint.value >= achievement.value;
+                            const achievementToDisplay = achieved ? achievement : notYetAchievedAchievement;
 
                             return (
                                 <Grid2 size={{xs: 12, sm:4}} style={{userSelect: "none"}} key={`${dataPoint.type}_overview_${i}`}>
@@ -139,14 +140,30 @@ const StatisticsGridItem: React.FunctionComponent<{ dataPoint: ValetudoDataPoint
                                                 <CardMedia
                                                     component={StatisticsAward}
                                                     achievement={achievementToDisplay}
-                                                    achieved={achievementToDisplay === achievement}
+                                                    achieved={achieved}
                                                 />
                                             </Grid2>
                                             <Grid2 style={{alignSelf: "flex-end", width: "100%"}}>
                                                 <CardContent style={{paddingBottom: "16px"}}>
-                                                    {<Typography variant="body1" mb={2}>
+                                                    <Typography variant="body1" mb={2}>
                                                         {achievementToDisplay.description}
-                                                    </Typography>}
+                                                    </Typography>
+                                                    {
+                                                        achieved && <>
+                                                            <Typography sx={{fontSize: 14}} color="text.secondary" gutterBottom>
+                                                                Achieved at
+                                                            </Typography>
+                                                            <Typography variant="body1" mb={2}>
+                                                                {
+                                                                    getHumanReadableStatValue({
+                                                                        type: dataPoint.type,
+                                                                        value: achievementToDisplay.value,
+                                                                        timestamp: dataPoint.timestamp
+                                                                    })
+                                                                }
+                                                            </Typography>
+                                                        </>
+                                                    }
                                                 </CardContent>
                                             </Grid2>
                                         </Grid2>

@@ -39,12 +39,14 @@ const EditMapPage = (props: {
         combinedVirtualRestrictionsCapabilitySupported,
 
         mapSegmentEditCapabilitySupported,
-        mapSegmentRenameCapabilitySupported
+        mapSegmentRenameCapabilitySupported,
+        mapSegmentMaterialControlCapabilitySupported
     ] = useCapabilitiesSupported(
         Capability.CombinedVirtualRestrictions,
 
         Capability.MapSegmentEdit,
-        Capability.MapSegmentRename
+        Capability.MapSegmentRename,
+        Capability.MapSegmentMaterialControl
     );
 
     const theme = useTheme();
@@ -98,7 +100,7 @@ const EditMapPage = (props: {
 
     return <EditMap
         rawMap={mapData}
-        theme={theme}
+        paletteMode={theme.palette.mode}
         mode={props.mode}
         helpText={helpText}
         robotStatus={robotStatus}
@@ -109,6 +111,7 @@ const EditMapPage = (props: {
 
             [Capability.MapSegmentEdit]: mapSegmentEditCapabilitySupported,
             [Capability.MapSegmentRename]: mapSegmentRenameCapabilitySupported,
+            [Capability.MapSegmentMaterialControl]: mapSegmentMaterialControlCapabilitySupported,
         }}
     />;
 };

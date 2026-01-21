@@ -13,7 +13,6 @@ const MiioDummycloudNotConnectedError = require("../../miio/MiioDummycloudNotCon
 const MiioValetudoRobot = require("../MiioValetudoRobot");
 const PendingMapChangeValetudoEvent = require("../../valetudo_events/events/PendingMapChangeValetudoEvent");
 const ValetudoMap = require("../../entities/map/ValetudoMap");
-const ValetudoRobot = require("../../core/ValetudoRobot");
 const ValetudoRobotError = require("../../entities/core/ValetudoRobotError");
 const ValetudoSelectionPreset = require("../../entities/core/ValetudoSelectionPreset");
 
@@ -64,7 +63,6 @@ class RoborockValetudoRobot extends MiioValetudoRobot {
             capabilities.RoborockGoToLocationCapability,
             capabilities.RoborockLocateCapability,
             capabilities.RoborockDoNotDisturbCapability,
-            capabilities.RoborockCarpetModeControlCapability,
             capabilities.RoborockSpeakerVolumeControlCapability,
             capabilities.RoborockSpeakerTestCapability,
             capabilities.RoborockVoicePackManagementCapability,
@@ -217,6 +215,8 @@ class RoborockValetudoRobot extends MiioValetudoRobot {
             case "event.fan_power_reduced":
             case "event.low_power_back": //If the robot is currently cleaning and the battery drops below 20% it drives home to charge
             case "event.start_with_water_box":
+            case "event.back_to_origin_fail":
+            case "event.back_to_origin_succ":
                 this.sendCloud({id: msg.id, "result":"ok"}).catch((err) => {
                     Logger.warn("Error while sending cloud ack", err);
                 });
@@ -485,7 +485,7 @@ class RoborockValetudoRobot extends MiioValetudoRobot {
                     repollSeconds += 1;
                 } else {
                     // This fixes the map not being available on boot for another 60 seconds
-                    repollSeconds = MiioValetudoRobot.MAP_POLLING_INTERVALS.ACTIVE;
+                    repollSeconds = RoborockValetudoRobot.MAP_POLLING_INTERVALS.ACTIVE;
                 }
             }
         }
@@ -596,7 +596,7 @@ class RoborockValetudoRobot extends MiioValetudoRobot {
             const firmwareVersion = this.getFirmwareVersion();
 
             if (firmwareVersion) {
-                ourProps[ValetudoRobot.WELL_KNOWN_PROPERTIES.FIRMWARE_VERSION] = firmwareVersion;
+                ourProps[RoborockValetudoRobot.WELL_KNOWN_PROPERTIES.FIRMWARE_VERSION] = firmwareVersion;
             }
         }
 

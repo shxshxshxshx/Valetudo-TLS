@@ -1,9 +1,5 @@
-import Map, {MapContainer, MapProps, MapState} from "./Map";
-import {
-    Capability,
-    RawMapEntityType,
-    StatusState
-} from "../api";
+import BaseMap, {MapContainer, MapProps, MapState} from "./BaseMap";
+import {Capability, RawMapEntityType, RawMapLayerMaterial, StatusState} from "../api";
 import {ActionsContainer} from "./Styled";
 import SegmentLabelMapStructure from "./structures/map_structures/SegmentLabelMapStructure";
 import SegmentActions from "./actions/edit_map_actions/SegmentActions";
@@ -26,6 +22,7 @@ interface EditMapProps extends MapProps {
 
         [Capability.MapSegmentEdit]: boolean,
         [Capability.MapSegmentRename]: boolean
+        [Capability.MapSegmentMaterialControl]: boolean
     }
     mode: mode,
     helpText: string,
@@ -35,6 +32,7 @@ interface EditMapProps extends MapProps {
 
 interface EditMapState extends MapState {
     segmentNames: Record<string, string>,
+    segmentMaterials: Record<string, RawMapLayerMaterial>,
     cuttingLine: CuttingLineClientStructure | undefined,
 
     virtualWalls: Array<VirtualWallClientStructure>,
@@ -44,7 +42,7 @@ interface EditMapState extends MapState {
     helpDialogOpen: boolean
 }
 
-class EditMap extends Map<EditMapProps, EditMapState> {
+class EditMap extends BaseMap<EditMapProps, EditMapState> {
     protected pendingVirtualRestrictionsStructuresUpdate = false;
 
     constructor(props: EditMapProps) {
@@ -57,6 +55,7 @@ class EditMap extends Map<EditMapProps, EditMapState> {
             dialogBody: "This should never be visible",
 
             segmentNames: {},
+            segmentMaterials: {},
             cuttingLine: undefined,
 
             virtualWalls: [],
@@ -79,7 +78,7 @@ class EditMap extends Map<EditMapProps, EditMapState> {
 
         this.drawableComponents = [];
 
-        await this.mapLayerManager.draw(this.props.rawMap, this.props.theme);
+        await this.mapLayerManager.draw(this.props.rawMap, this.props.paletteMode);
         this.drawableComponents.push(this.mapLayerManager.getCanvas());
 
         this.updateStructures(this.props.mode);
@@ -92,7 +91,7 @@ class EditMap extends Map<EditMapProps, EditMapState> {
                 mapWidth: this.props.rawMap.size.x,
                 mapHeight: this.props.rawMap.size.y,
                 pixelSize: this.props.rawMap.pixelSize,
-                paletteMode: this.props.theme.palette.mode,
+                paletteMode: this.props.paletteMode,
                 opacity: 0.5
             });
 
@@ -113,6 +112,7 @@ class EditMap extends Map<EditMapProps, EditMapState> {
             entities: this.props.rawMap.entities.filter(e => {
                 switch (e.type) {
                     case RawMapEntityType.ChargerLocation:
+                    case RawMapEntityType.Carpet:
                         return true;
                     default:
                         return false;
@@ -135,17 +135,20 @@ class EditMap extends Map<EditMapProps, EditMapState> {
         super.updateState();
 
         const segmentNames = {} as Record<string, string>;
+        const segmentMaterials = {} as Record<string, RawMapLayerMaterial>;
         this.structureManager.getMapStructures().forEach(s => {
             if (s.type === SegmentLabelMapStructure.TYPE) {
                 const label = s as SegmentLabelMapStructure;
 
                 segmentNames[label.id] = label.name ?? label.id;
+                segmentMaterials[label.id] = label.material ?? RawMapLayerMaterial.Generic;
             }
         });
 
 
         this.setState({
             segmentNames: segmentNames,
+            segmentMaterials: segmentMaterials,
             cuttingLine: this.structureManager.getClientStructures().find(s => {
                 if (s.type === CuttingLineClientStructure.TYPE) {
                     return true;
@@ -336,13 +339,15 @@ class EditMap extends Map<EditMapProps, EditMapState> {
                             robotStatus={this.props.robotStatus}
                             selectedSegmentIds={this.state.selectedSegmentIds}
                             segmentNames={this.state.segmentNames}
+                            segmentMaterials={this.state.segmentMaterials}
                             cuttingLine={this.state.cuttingLine}
                             convertPixelCoordinatesToCMSpace={(coordinates => {
                                 return this.structureManager.convertPixelCoordinatesToCMSpace(coordinates);
                             })}
                             supportedCapabilities={{
                                 [Capability.MapSegmentEdit]: this.props.supportedCapabilities[Capability.MapSegmentEdit],
-                                [Capability.MapSegmentRename]: this.props.supportedCapabilities[Capability.MapSegmentRename]
+                                [Capability.MapSegmentRename]: this.props.supportedCapabilities[Capability.MapSegmentRename],
+                                [Capability.MapSegmentMaterialControl]: this.props.supportedCapabilities[Capability.MapSegmentMaterialControl]
                             }}
                             onAddCuttingLine={() => {
                                 const currentCenter = this.getCurrentViewportCenterCoordinatesInPixelSpace();

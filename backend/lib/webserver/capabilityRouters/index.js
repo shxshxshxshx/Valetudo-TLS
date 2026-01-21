@@ -12,12 +12,14 @@ module.exports = {
     ManualControlCapabilityRouter: require("./ManualControlCapabilityRouter"),
     MapResetCapabilityRouter: require("./MapResetCapabilityRouter"),
     MapSegmentEditCapabilityRouter: require("./MapSegmentEditCapabilityRouter"),
+    MapSegmentMaterialControlCapabilityRouter: require("./MapSegmentMaterialControlCapabilityRouter"),
     MapSegmentRenameCapabilityRouter: require("./MapSegmentRenameCapabilityRouter"),
     MapSegmentationCapabilityRouter: require("./MapSegmentationCapabilityRouter"),
     MapSnapshotCapabilityRouter: require("./MapSnapshotCapabilityRouter"),
     MappingPassCapabilityRouter: require("./MappingPassCapabilityRouter"),
     MopDockCleanManualTriggerCapabilityRouter: require("./MopDockCleanManualTriggerCapabilityRouter"),
     MopDockDryManualTriggerCapabilityRouter: require("./MopDockDryManualTriggerCapabilityRouter"),
+    MopDockMopWashTemperatureControlCapabilityRouter : require("./MopDockMopWashTemperatureControlCapabilityRouter"),
     ObstacleImagesCapabilityRouter: require("./ObstacleImagesCapabilityRouter"),
     PendingMapChangeHandlingCapabilityRouter: require("./PendingMapChangeHandlingCapabilityRouter"),
     PresetSelectionCapabilityRouter: require("./PresetSelectionCapabilityRouter"),
@@ -29,5 +31,5 @@ module.exports = {
     VoicePackManagementCapabilityRouter: require("./VoicePackManagementCapabilityRouter"),
     WifiConfigurationCapabilityRouter: require("./WifiConfigurationCapabilityRouter"),
     WifiScanCapabilityRouter: require("./WifiScanCapabilityRouter"),
-    ZoneCleaningCapabilityRouter: require("./ZoneCleaningCapabilityRouter")
+    ZoneCleaningCapabilityRouter: require("./ZoneCleaningCapabilityRouter"),
 };

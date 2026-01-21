@@ -42,7 +42,7 @@ class MapSegmentationCapabilityMqttHandle extends CapabilityMqttHandle {
 
                     for (const id of reqSegments.segment_ids) {
                         const segment = robotSegments.find(segm => {
-                            return (segm.id === id || parseInt(segm.id) === id);
+                            return segm.id === `${id}`; // Ensure that it works even if the user incorrectly passes numbers
                         });
                         if (!segment) {
                             throw new Error(`Segment ID does not exist, or map was not loaded: ${id}`);
@@ -58,6 +58,7 @@ class MapSegmentationCapabilityMqttHandle extends CapabilityMqttHandle {
             helpText: "This handle accepts a JSON object identical to the one used by the REST API.\n\n" +
                 "Simply use the Map in the Valetudo UI, select the desired segments and iterations and then long-press the button that would start the action.<br/>\n" +
                 "This will open a modal containing the copy-pasteable payload.\n\n" +
+                "\n**Note:** Not all firmwares support customOrder.\n\n" +
                 "Sample payload:\n\n" +
                 "```json\n" +
                 JSON.stringify({

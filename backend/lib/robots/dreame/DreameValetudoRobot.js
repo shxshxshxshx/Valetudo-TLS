@@ -17,7 +17,6 @@ const MiioValetudoRobot = require("../MiioValetudoRobot");
 const MopAttachmentReminderValetudoEvent = require("../../valetudo_events/events/MopAttachmentReminderValetudoEvent");
 const PendingMapChangeValetudoEvent = require("../../valetudo_events/events/PendingMapChangeValetudoEvent");
 const ValetudoMap = require("../../entities/map/ValetudoMap");
-const ValetudoRobot = require("../../core/ValetudoRobot");
 const ValetudoRobotError = require("../../entities/core/ValetudoRobotError");
 
 const stateAttrs = entities.state.attributes;
@@ -284,7 +283,7 @@ class DreameValetudoRobot extends MiioValetudoRobot {
             const firmwareVersion = this.getFirmwareVersion();
 
             if (firmwareVersion.valid) {
-                ourProps[ValetudoRobot.WELL_KNOWN_PROPERTIES.FIRMWARE_VERSION] = firmwareVersion.arm;
+                ourProps[DreameValetudoRobot.WELL_KNOWN_PROPERTIES.FIRMWARE_VERSION] = firmwareVersion.arm;
             }
         }
 
@@ -396,6 +395,12 @@ DreameValetudoRobot.WATER_GRADES = Object.freeze({
     [stateAttrs.PresetSelectionStateAttribute.INTENSITY.LOW]: 1,
     [stateAttrs.PresetSelectionStateAttribute.INTENSITY.MEDIUM]: 2,
     [stateAttrs.PresetSelectionStateAttribute.INTENSITY.HIGH]: 3,
+});
+
+DreameValetudoRobot.AUTO_EMPTY_DOCK_STATUS_MAP = Object.freeze({
+    0: stateAttrs.DockStatusStateAttribute.VALUE.IDLE,
+    1: stateAttrs.DockStatusStateAttribute.VALUE.EMPTYING,
+    2: stateAttrs.DockStatusStateAttribute.VALUE.IDLE, // DND
 });
 
 DreameValetudoRobot.MOP_DOCK_STATUS_MAP = Object.freeze({

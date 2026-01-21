@@ -1,4 +1,4 @@
-import Map, {MapContainer, MapProps, MapState} from "./Map";
+import BaseMap, {MapContainer, MapProps, MapState} from "./BaseMap";
 import HelpDialog from "../components/HelpDialog";
 import HelpAction from "./actions/edit_map_actions/HelpAction";
 import {PathDrawer} from "./PathDrawer";
@@ -15,7 +15,7 @@ interface CleanupCoverageMapState extends MapState {
     helpDialogOpen: boolean
 }
 
-class RobotCoverageMap extends Map<CleanupCoverageMapProps, CleanupCoverageMapState> {
+class RobotCoverageMap extends BaseMap<CleanupCoverageMapProps, CleanupCoverageMapState> {
     constructor(props: MapProps) {
         super(props);
 
@@ -70,7 +70,7 @@ class RobotCoverageMap extends Map<CleanupCoverageMapProps, CleanupCoverageMapSt
 
         this.drawableComponents = [];
 
-        await this.mapLayerManager.draw(this.props.rawMap, this.props.theme);
+        await this.mapLayerManager.draw(this.props.rawMap, this.props.paletteMode);
         this.drawableComponents.push(this.mapLayerManager.getCanvas());
 
         const coveragePathImage = await PathDrawer.drawPaths( {
@@ -80,7 +80,7 @@ class RobotCoverageMap extends Map<CleanupCoverageMapProps, CleanupCoverageMapSt
             mapWidth: this.props.rawMap.size.x,
             mapHeight: this.props.rawMap.size.y,
             pixelSize: this.props.rawMap.pixelSize,
-            paletteMode: this.props.theme.palette.mode === "dark" ? "light" : "dark",
+            paletteMode: this.props.paletteMode,
             width: 5
         });
 
@@ -93,7 +93,7 @@ class RobotCoverageMap extends Map<CleanupCoverageMapProps, CleanupCoverageMapSt
             mapWidth: this.props.rawMap.size.x,
             mapHeight: this.props.rawMap.size.y,
             pixelSize: this.props.rawMap.pixelSize,
-            paletteMode: this.props.theme.palette.mode,
+            paletteMode: this.props.paletteMode,
         });
 
         this.drawableComponents.push(pathsImage);

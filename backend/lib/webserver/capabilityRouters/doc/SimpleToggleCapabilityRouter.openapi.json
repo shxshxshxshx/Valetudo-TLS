@@ -384,83 +384,6 @@
       }
     }
   },
-  "/api/v2/robot/capabilities/AutoEmptyDockAutoEmptyControlCapability": {
-    "get": {
-      "tags": [
-        "AutoEmptyDockAutoEmptyControlCapability"
-      ],
-      "summary": "Get auto empty dock auto empty setting",
-      "responses": {
-        "200": {
-          "description": "Ok",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "put": {
-      "tags": [
-        "AutoEmptyDockAutoEmptyControlCapability"
-      ],
-      "summary": "Set auto empty dock auto empty setting",
-      "requestBody": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "type": "object",
-              "properties": {
-                "action": {
-                  "type": "string",
-                  "enum": [
-                    "enable",
-                    "disable"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "responses": {
-        "200": {
-          "$ref": "#/components/responses/200"
-        },
-        "400": {
-          "$ref": "#/components/responses/400"
-        }
-      }
-    }
-  },
-  "/api/v2/robot/capabilities/AutoEmptyDockAutoEmptyControlCapability/properties": {
-    "get": {
-      "tags": [
-        "AutoEmptyDockAutoEmptyControlCapability"
-      ],
-      "summary": "Get various capability-related properties",
-      "responses": {
-        "200": {
-          "description": "Ok",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    }
-  },
   "/api/v2/robot/capabilities/CollisionAvoidantNavigationControlCapability": {
     "get": {
       "tags": [
@@ -522,6 +445,468 @@
     "get": {
       "tags": [
         "CollisionAvoidantNavigationControlCapability"
+      ],
+      "summary": "Get various capability-related properties",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/MopExtensionControlCapability": {
+    "get": {
+      "tags": [
+        "MopExtensionControlCapability"
+      ],
+      "summary": "Get mop extension setting",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "put": {
+      "tags": [
+        "MopExtensionControlCapability"
+      ],
+      "summary": "Set mop extension setting",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "enable",
+                    "disable"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "$ref": "#/components/responses/200"
+        },
+        "400": {
+          "$ref": "#/components/responses/400"
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/MopExtensionControlCapability/properties": {
+    "get": {
+      "tags": [
+        "MopExtensionControlCapability"
+      ],
+      "summary": "Get various capability-related properties",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/CameraLightControlCapability": {
+    "get": {
+      "tags": [
+        "CameraLightControlCapability"
+      ],
+      "summary": "Get camera light setting",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "put": {
+      "tags": [
+        "CameraLightControlCapability"
+      ],
+      "summary": "Set camera light setting",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "enable",
+                    "disable"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "$ref": "#/components/responses/200"
+        },
+        "400": {
+          "$ref": "#/components/responses/400"
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/CameraLightControlCapability/properties": {
+    "get": {
+      "tags": [
+        "CameraLightControlCapability"
+      ],
+      "summary": "Get various capability-related properties",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/MopTwistControlCapability": {
+    "get": {
+      "tags": [
+        "MopTwistControlCapability"
+      ],
+      "summary": "Get mop twist setting",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "put": {
+      "tags": [
+        "MopTwistControlCapability"
+      ],
+      "summary": "Set mop twist setting",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "enable",
+                    "disable"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "$ref": "#/components/responses/200"
+        },
+        "400": {
+          "$ref": "#/components/responses/400"
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/MopTwistControlCapability/properties": {
+    "get": {
+      "tags": [
+        "MopTwistControlCapability"
+      ],
+      "summary": "Get various capability-related properties",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/MopExtensionFurnitureLegHandlingControlCapability": {
+    "get": {
+      "tags": [
+        "MopExtensionFurnitureLegHandlingControlCapability"
+      ],
+      "summary": "Get mop extension furniture leg handling setting",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "put": {
+      "tags": [
+        "MopExtensionFurnitureLegHandlingControlCapability"
+      ],
+      "summary": "Set mop extension furniture leg handling setting",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "enable",
+                    "disable"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "$ref": "#/components/responses/200"
+        },
+        "400": {
+          "$ref": "#/components/responses/400"
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/MopExtensionFurnitureLegHandlingControlCapability/properties": {
+    "get": {
+      "tags": [
+        "MopExtensionFurnitureLegHandlingControlCapability"
+      ],
+      "summary": "Get various capability-related properties",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/MopDockMopAutoDryingControlCapability": {
+    "get": {
+      "tags": [
+        "MopDockMopAutoDryingControlCapability"
+      ],
+      "summary": "Get mop auto drying setting",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "put": {
+      "tags": [
+        "MopDockMopAutoDryingControlCapability"
+      ],
+      "summary": "Set mop auto drying setting",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "enable",
+                    "disable"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "$ref": "#/components/responses/200"
+        },
+        "400": {
+          "$ref": "#/components/responses/400"
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/MopDockMopAutoDryingControlCapability/properties": {
+    "get": {
+      "tags": [
+        "MopDockMopAutoDryingControlCapability"
+      ],
+      "summary": "Get various capability-related properties",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/FloorMaterialDirectionAwareNavigationControlCapability": {
+    "get": {
+      "tags": [
+        "FloorMaterialDirectionAwareNavigationControlCapability"
+      ],
+      "summary": "Get floor material direction aware navigation setting",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "put": {
+      "tags": [
+        "FloorMaterialDirectionAwareNavigationControlCapability"
+      ],
+      "summary": "Set floor material direction aware navigation setting",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "enable",
+                    "disable"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "$ref": "#/components/responses/200"
+        },
+        "400": {
+          "$ref": "#/components/responses/400"
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/FloorMaterialDirectionAwareNavigationControlCapability/properties": {
+    "get": {
+      "tags": [
+        "FloorMaterialDirectionAwareNavigationControlCapability"
       ],
       "summary": "Get various capability-related properties",
       "responses": {

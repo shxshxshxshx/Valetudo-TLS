@@ -78,6 +78,8 @@ class WebServer {
             this.app.use(Middlewares.ExternalAccessCheckMiddleware);
         }
 
+        this.app.use(Middlewares.EggTermMiddleware);
+
         const authMiddleware = this.createAuthMiddleware();
         const oidcMiddleware = OidcAuth.auth({
             issuerBaseURL: this.webserverConfig.auth.sso.oidc.issuer,

@@ -7,7 +7,6 @@ const Logger = require("../../Logger");
 const miioCapabilities = require("../common/miioCapabilities");
 const MiioValetudoRobot = require("../MiioValetudoRobot");
 const ThreeIRobotixMapParser = require("../3irobotix/ThreeIRobotixMapParser");
-const ValetudoRobot = require("../../core/ValetudoRobot");
 const ValetudoRobotError = require("../../entities/core/ValetudoRobotError");
 const ValetudoSelectionPreset = require("../../entities/core/ValetudoSelectionPreset");
 
@@ -509,8 +508,6 @@ class ViomiValetudoRobot extends MiioValetudoRobot {
         this.ephemeralState.vendorMapId = 0;
 
         super.clearValetudoMap();
-
-        this.emitMapUpdated();
     }
 
     getManufacturer() {
@@ -563,7 +560,7 @@ class ViomiValetudoRobot extends MiioValetudoRobot {
             const firmwareVersion = this.getFirmwareVersion();
 
             if (firmwareVersion) {
-                ourProps[ValetudoRobot.WELL_KNOWN_PROPERTIES.FIRMWARE_VERSION] = firmwareVersion;
+                ourProps[ViomiValetudoRobot.WELL_KNOWN_PROPERTIES.FIRMWARE_VERSION] = firmwareVersion;
             }
         }
 

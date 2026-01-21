@@ -45,12 +45,21 @@ export interface RawMapLayerMetaData {
     segmentId?: string;
     name?: string;
     active?: boolean;
+    material?: RawMapLayerMaterial
 }
 
 export enum RawMapLayerType {
     Floor = "floor",
     Segment = "segment",
     Wall = "wall",
+}
+
+export enum RawMapLayerMaterial {
+    Generic = "generic",
+    Tile = "tile",
+    Wood = "wood",
+    WoodHorizontal = "wood_horizontal",
+    WoodVertical = "wood_vertical"
 }
 
 export enum RawMapEntityType {
@@ -64,6 +73,7 @@ export enum RawMapEntityType {
     NoGoArea = "no_go_area",
     NoMopArea = "no_mop_area",
     ActiveZone = "active_zone",
+    Carpet = "carpet"
 }
 
 export interface RawMapDataMetaData {

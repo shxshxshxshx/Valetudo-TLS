@@ -9,7 +9,7 @@ order: 8
 This page shall help you start using Valetudo. Make sure that you've read the [newcomer guide](https://valetudo.cloud/pages/general/newcomer-guide.html).
 If you haven't done that already please do so and then come back here.
 
-You may also want to read the [Why Valetudo?](https://valetudo.cloud/pages/general/why-valetudo.html) and [Why not Valetudo?](https://valetudo.cloud/pages/general/why-not-valetudo.html)
+Please read the [Why Valetudo?](https://valetudo.cloud/pages/general/why-valetudo.html) and [Why not Valetudo?](https://valetudo.cloud/pages/general/why-not-valetudo.html)
 pages before continuing with this guide.
 
 ## Table of Contents
@@ -32,6 +32,16 @@ Please refrain from buying any random robot just to then ask how we can make Val
 After you've acquired your supported vacuum robot, the next step is to do a simple test run **before** you void
 your warranty. Usually it's possible to simply use the buttons on the robot to start a cleanup. No need to use an official app.
 
+Since it is your robot, you will have to decide if everything looks fine to you.
+However, for your convenience, here are some common things to ask/check:
+
+- Does it die right away? 
+- Does it pick up dirt?
+- Does it navigate somewhat properly?
+- Does it dock and charge successfully on its own?
+- Does it auto-empty? (if applicable)
+- Does it clean the mops? (if applicable)
+
 If everything seems to be working fine with no unexpected error messages, weird behaviour or things catching fire, you can
 now start following the rooting instructions for your [supported robot](https://valetudo.cloud/pages/general/supported-robots.html).
 
@@ -45,7 +55,7 @@ Instead, you should use Valetudo for that. Simply connect to the Wi-Fi AP of you
 
 [<img src="https://user-images.githubusercontent.com/974410/198879902-4d1de531-1537-4e89-b85c-17c693ed8fdc.png" height=600>](https://user-images.githubusercontent.com/974410/198879902-4d1de531-1537-4e89-b85c-17c693ed8fdc.png)
 
-The IP may vary based on your model of robot. Usually, it's either `http://192.168.5.1` or `http://192.168.8.1`.
+The IP may vary based on your model of robot. Usually, it's either `http://192.168.5.1`, `http://192.168.8.1` or `http://10.201.126.1/`.
 Note that some browsers might try redirecting you to `https://` without you noticing.
 
 On recent versions of Android, don't forget to disable mobile data and click through about seven nagscreens as otherwise the OS will not route
@@ -73,8 +83,7 @@ If you're using a computer running Microsoft Windows, you can also open the expl
 
 Congratulations! You have now significantly increased the baseline cleanliness of your living space.
 
-It is strongly recommended to now connect Valetudo to the home automation system of your choice such as [OpenHab](https://valetudo.cloud/pages/integrations/openhab-integration.html)
-or [Home Assistant](https://valetudo.cloud/pages/integrations/home-assistant-integration.html).
+It is strongly recommended to now connect Valetudo to the home automation system of your choice such as [Home Assistant](https://valetudo.cloud/pages/integrations/home-assistant-integration.html).
 
 Using that, you can now do things such as
 

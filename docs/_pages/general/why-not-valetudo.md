@@ -6,18 +6,43 @@ order: 7
 
 # Why not Valetudo?
 
-After having read through the [Why Valetudo?](https://valetudo.cloud/pages/general/why-valetudo.html) page,
-you might also be wondering why you might **not** want to use Valetudo.
-To answer those questions, here's a list of a few common reasons in an attempt to reduce the amount of some incredibly exhausting discussions.
+After having read through the [Why Valetudo?](https://valetudo.cloud/pages/general/why-valetudo.html) page, you might also be wondering why you might **not** want to use Valetudo.
 
-**Always remember:**<br/>
-The only person forcing you to use Valetudo is yourself. Using Valetudo is **your own conscious decision**.
+This page is (among other things) a collection of deconstructions of and counters to common pathologies of FOSS I've experienced over the years.
+Every word in here is the result of a (hopefully complete and productive) post-mortem analysis of one or maybe even many conflicts and failures.
 
-If the things listed here are a deal-breaker to you then that's fine. It's completely reasonable to have different
-opinions and thoughts on these things. You just won't be happy with Valetudo then.<br/><br/>
-Thank you for not acting entitled.
+In an effort of saving you time, the absolute minimum **TL;DR** I can provide is:
+> Valetudo is likely not what you expect and will also not try to be that.
+> It is **very different** from other projects you might be used to.
+>
+> This is not because I want to hurt anyone, but because I repeatedly got hurt from following what we currently consider "best practices".<br/>
+> As Valetudo itself is "doing things differently" from the "best practice" that is cloud IoT (of which we all got hurt repeatedly),
+> it only makes sense to follow through with that spirit in all aspects.
+>
+> The core idea here being to build something in a sustainable, reliable, ethical and true-to-myself way.
+>
+> Regardless of these often unexpected differences, it manages to work fine for probably 95% of people (most of them enjoying that it "just works"),
+> but for those it doesn't work for, it _really_ doesn't work.
 
-## Valetudo is opinionated software
+With this said, I'd like to encourage you to approach this writing with curiosity and not view it as an obstacle that would require overcoming.
+
+It is reasonable, expected and likely that you might have different opinions and thoughts on the topics discussed here.
+This is just one of many small niches of the internet. It might turn out not be the right one for you, but it also might turn out to be.
+
+## Table of Contents
+1. [Valetudo is opinionated software](#opinionated_software)
+2. [Valetudo is counterculture](#counterculture)
+3. [Valetudo is not a community](#not_a_community)
+4. [Valetudo is not about you](#not_about_you)
+5. [Valetudo replaces the Cloud](#replaces_the_cloud)
+6. [Reverting to stock is impossible](#reverting_impossible)
+7. [Feature-parity is a non-goal](#feature_parity_non_goal)
+8. [Only supported robots are supported](#only_supported_robots)
+9. [Valetudo is only available in english](#english_only)
+10. [No multi-floor/multi-map support](#no_multi_floor)
+
+
+## Valetudo is opinionated software<a id='opinionated_software'></a>
 
 _Opinionated software_ means that the software has a clear vision on how things should work, what it should do and also what it should not do.
 Valetudo is a piece of software that you could call _opinionated software_ that is used by the developer himself on a daily basis.
@@ -35,7 +60,7 @@ That's fine. It doesn't have to be. Neither do you have to change nor does the p
 
 Sometimes it's just not working out. You should see other software.
 
-## Valetudo is counterculture
+## Valetudo is counterculture<a id='counterculture'></a>
 
 Even though the project exists in the consumer electronics space and is polished as if it was a product, it is very much not that.<br/>
 Instead, it is highly idealistic, anti-consumerism, anti-hypergrowth and anti just-continuing-what-we-do-now.
@@ -53,7 +78,28 @@ There is no way of using it without being constantly confronted with them.
 
 If you're not willing to reflect, introspect, grow and most importantly **stop**, you will not be happy with Valetudo.
 
-## Valetudo is not a community
+___
+
+Before continuing, pause here for a second and think about what that _actually means_.
+
+1. To survive within a culture (and even more so to be successful within it), people will (to some degree) embed it into their thinking; usually subconsciously. 
+This is not an individual failing but human nature. It is how society works.<br/>
+Precisely because it is how society functions, if someone can selectively control whether they adhere to it, it often scares people, as it is a threat to reality itself.
+Society then usually attaches labels such as "psychopath" or "successful CEO" to such a person, though sometimes, reality might also just be a mundane "neurodivergent" or "philosophy major".
+
+2. The idea of "counter-culture" is to **counter** the dominant culture, meaning that it _will_ be painful with increasing intensity,
+the deeper one's beliefs anchor into said culture.
+
+Keep that in mind, as due to it, all the communication here is effectively throwing industrial quantities of salt from the sky.
+This means that _if_ there is an open figurative wound _somewhere_, no matter how small it might be, it will hurt.
+
+The sometimes perceived FOSS default culture stance is to **not** do this, as, for obvious reasons, it harms adaption and scaling.
+There is however no law stating that whatever you do must adhere to defaults and default goals other people believe exist.
+
+Unfortunately, "being counter-culture" itself has already been monetized by grifters pretending to do so as a selling point.<br/>
+This might also skew with perception and expectations.
+
+## Valetudo is not a community<a id='not_a_community'></a>
 
 Contrary to common expectations when it comes to software released under a FOSS-like license, Valetudo is not a community-driven project;
 nor does it even _have_ a **community** in that sense.
@@ -76,7 +122,10 @@ It does not add more weight to your opinion. It does not entitle you to special 
 If you're looking to "become a community member", Valetudo ain't it.<br/>
 It does not offer that experience.
 
-## Valetudo is not about you
+Evidently, the world seems to be more than fine with this approach when Trent Reznor does it,
+so I do not think that this idea is in any way alien, new or incompatible with reality.
+
+## Valetudo is not about you<a id='not_about_you'></a>
 
 Valetudo is a solution I built to a problem I had that I shared with the world, because I naively assumed that the cost of sharing would be zero.<br/>
 That was a profound underestimation but now here we are. Can't stop now as that would be weird.
@@ -100,7 +149,7 @@ A story where someone isn't just a user of a piece of software that followed a g
 A story where someone becomes a powerful tech wizard who _purely on their own_ freed their robot, took agency and is generally better, smarter and more important than all the others.<br/>
 And when cognitive dissonance threatens that false story, people attack what they perceive as the source of it - me.
 
-What makes this truly sad is the human suffering behind it.<br/>
+What makes this truly, truly sad is the human suffering behind it.<br/>
 No one who is doing well in their life clings this desperately to a borrowed identity.
 
 And the tragedy is that it's unnecessary. Identity isn't a zero-sum game.
@@ -110,24 +159,54 @@ Those other achievements do not take away from your achievement.
 I know that it is weird for someone to just write such a text in such a place with such bold claims, but if you run into the same-style conflict for the better part of a decade, you eventually spot patterns.
 Sadly, this _could_ be a welcoming space for the people affected, but those patterns ruin any possibility for that to happen - and also my day on a weekly basis.
 
-So please just don't be like that, okay?<br/>
-Use the software, be proud of yourself - but do so in a healthy fashion
 
-## Valetudo replaces the Cloud
+
+The context, btw, is even bigger and not at all limited to me or Valetudo, because it's more or less _the_ primary business model the world currently operates on.<br/>
+There is _a lot_ of money to be made by catering to such pathological delusions and making sure to prevent people from ever developing healthier sources of self-worth.
+There is also a lot of political/societal influence to be had by encouraging people to continue exercising them.
+
+You can be \<cool identity>. Just buy \<thing>. <br/>- Brands, Products <br/>
+<br/>
+You can be \<cool other identity>. Just do what I tell you/repeat exactly what I say and do not critically think about it.<br/>- Influencers, Campaigns, The corporate ladder, Unfortunately also corpo-style run FOSS
+<br/><br/>
+
+Never create. Never stray from the set path.<br/>
+Become an evangelist. Consume product.
+
+What I find interesting is that this is nothing new. Everyone pretty much knows this. Intellectually at least.<br/>
+It is a super common talking point. Yet it still happens and works all the time in execution.
+
+And most mind-bogglingly, you get pushback if you try to do the ethical thing and push back against this highly disrespectful exploitation of human suffering, because you become the source of the negative emotion.
+
+Not just _a bit_ of pushback. You get pushback hard. People doxxing you and being angry at you on the internet for years pushback.<br/>
+Pushback this harsh for the crime of having some backbone and not extracting value out of their pathologies for one's own benefit.<br/>
+Pushback for _actually being nice_ instead of _using nice words_.
+
+
+So please just don't be like that, okay?<br/>
+Use the software, be proud of yourself - but do so in a healthy fashion.
+
+And, if you feel like you've been mistreated, please be assured that I have your best interest in mind.<br/>
+You simply do not run a project this ideologically for this long if you'd be operating based on petty principles,
+nor would you pay this high of a price just to hurt other people for funsies.
+
+If you understand the systems, there are lots of much easier ways to do that, that come with either near-zero cost or even earn you money.
+
+## Valetudo replaces the Cloud<a id='replaces_the_cloud'></a>
 
 Valetudo is a cloud replacement, meaning that it replaces the cloud.<br/>
 As it stops all connectivity to the vendor cloud, the vendor app will also stop working.
 
 It is **not possible** to use Valetudo and the vendor app simultaneously.
 
-## Reverting to stock is impossible
+## Reverting to stock is impossible<a id='reverting_impossible'></a>
 
 Rooting and installing Valetudo is a permanent change. There is no way back.
 
 If you're looking for an experience similar to trying out a Linux Live CD, this is not it.<br/>
 If you're unsure whether or not you should install Valetudo, the answer is no, you should not install Valetudo.
 
-## Feature-parity is a non-goal
+## Feature-parity is a non-goal<a id='feature_parity_non_goal'></a>
 
 Valetudo is a solution for wanting _a_ vacuum robot that works local only. It is not "$VENDOR but without the cloud".
 
@@ -168,7 +247,7 @@ Again, it <i>could</i> do that, yes, but that would be bad because that cycle is
 
 <br/>
 
-## Only supported robots are supported
+## Only supported robots are supported<a id='only_supported_robots'></a>
 
 While this may sound incredibly dumb, it unfortunately needs saying nonetheless.
 
@@ -188,7 +267,7 @@ that could be utilized to provide support.
 It is possible to use Valetudo on unsupported robots or in unsupported ways.
 Just note that there will be no support for these unsupported scenarios.
 
-## Valetudo is only available in english
+## Valetudo is only available in english<a id='english_only'></a>
 
 Valetudo does not feature any localization. Let me explain the reasoning behind this with a few examples.
 
@@ -251,7 +330,7 @@ This is also required even if the translation is done by someone else, because y
 As even huge corporations known for being user-friendly and also paired with insane budgets fail to do this all the time,
 I don't think that it is actually a feasible task.
 
-## No multi-floor/multi-map support
+## No multi-floor/multi-map support<a id='no_multi_floor'></a>
 
 **2024 Update**
 
@@ -265,7 +344,7 @@ TL;DR:<br/>
 3. Most importantly: There are also strong opinions against it.
 
 
-Multi-floor to me always seemed like a feature cooked up by product management in an effort to have another feature for sales purposes, 
+Multi-floor to me always seemed like a feature cooked up by product management in an effort to have another feature for sales purposes,
 without getting too costly on the hardware and development side.
 It always broke the core idea of having an autonomous cleaning thing you don't have to care about, because it can't be autonomous if you have to put it somewhere.
 Some people used it regardless. Some due to real budget concerns; others due to fictional ones.

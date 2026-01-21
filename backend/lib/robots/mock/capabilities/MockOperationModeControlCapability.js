@@ -4,18 +4,19 @@ const ValetudoSelectionPreset = require("../../../entities/core/ValetudoSelectio
 const stateAttrs = entities.state.attributes;
 
 /**
- * @extends OperationModeControlCapability<import("../MockRobot")>
+ * @extends OperationModeControlCapability<import("../MockValetudoRobot")>
  */
 class MockOperationModeControlCapability extends OperationModeControlCapability {
     /**
      * @param {object} options
-     * @param {import("../MockRobot")} options.robot
+     * @param {import("../MockValetudoRobot")} options.robot
      */
     constructor(options) {
         let presets = [
             new ValetudoSelectionPreset({name: entities.state.attributes.PresetSelectionStateAttribute.MODE.MOP, value: 0}),
             new ValetudoSelectionPreset({name: entities.state.attributes.PresetSelectionStateAttribute.MODE.VACUUM, value: 1}),
-            new ValetudoSelectionPreset({name: entities.state.attributes.PresetSelectionStateAttribute.MODE.VACUUM_AND_MOP, value: 2})
+            new ValetudoSelectionPreset({name: entities.state.attributes.PresetSelectionStateAttribute.MODE.VACUUM_AND_MOP, value: 2}),
+            new ValetudoSelectionPreset({name: entities.state.attributes.PresetSelectionStateAttribute.MODE.VACUUM_THEN_MOP, value: 3}),
         ];
         super({
             robot: options.robot,

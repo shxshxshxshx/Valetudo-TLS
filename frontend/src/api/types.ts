@@ -1,18 +1,19 @@
 import {AttachmentStateAttributeType} from "./RawRobotState";
 
 export enum Capability {
-    AutoEmptyDockAutoEmptyControl = "AutoEmptyDockAutoEmptyControlCapability",
     AutoEmptyDockAutoEmptyIntervalControl = "AutoEmptyDockAutoEmptyIntervalControlCapability",
     AutoEmptyDockManualTrigger = "AutoEmptyDockManualTriggerCapability",
     BasicControl = "BasicControlCapability",
     CarpetModeControl = "CarpetModeControlCapability",
     CarpetSensorModeControl = "CarpetSensorModeControlCapability",
+    CameraLightControl = "CameraLightControlCapability",
     CollisionAvoidantNavigation = "CollisionAvoidantNavigationControlCapability",
     CombinedVirtualRestrictions = "CombinedVirtualRestrictionsCapability",
     ConsumableMonitoring = "ConsumableMonitoringCapability",
     CurrentStatistics = "CurrentStatisticsCapability",
     DoNotDisturb = "DoNotDisturbCapability",
     FanSpeedControl = "FanSpeedControlCapability",
+    FloorMaterialDirectionAwareNavigationControl = "FloorMaterialDirectionAwareNavigationControlCapability",
     GoToLocation = "GoToLocationCapability",
     KeyLock = "KeyLockCapability",
     Locate = "LocateCapability",
@@ -21,13 +22,19 @@ export enum Capability {
     MapReset = "MapResetCapability",
     MapSegmentEdit = "MapSegmentEditCapability",
     MapSegmentRename = "MapSegmentRenameCapability",
+    MapSegmentMaterialControl = "MapSegmentMaterialControlCapability",
     MapSegmentation = "MapSegmentationCapability",
     MapSnapshot = "MapSnapshotCapability",
     MappingPass = "MappingPassCapability",
+    MopDockMopWashTemperatureControl = "MopDockMopWashTemperatureControlCapability",
     ObstacleAvoidanceControl = "ObstacleAvoidanceControlCapability",
     PetObstacleAvoidanceControl = "PetObstacleAvoidanceControlCapability",
+    MopExtensionControl = "MopExtensionControlCapability",
+    MopTwistControl = "MopTwistControlCapability",
+    MopExtensionFurnitureLegHandlingControl = "MopExtensionFurnitureLegHandlingControlCapability",
     MopDockCleanManualTrigger = "MopDockCleanManualTriggerCapability",
     MopDockDryManualTrigger = "MopDockDryManualTriggerCapability",
+    MopDockMopAutoDryingControl = "MopDockMopAutoDryingControlCapability",
     OperationModeControl = "OperationModeControlCapability",
     PersistentMapControl = "PersistentMapControlCapability",
     SpeakerTest = "SpeakerTestCapability",
@@ -145,6 +152,15 @@ export interface SystemRuntimeInfo {
     env: Record<string, string>
 }
 
+export enum MapSegmentMaterial {
+    Generic = "generic",
+    Tile = "tile",
+    Wood = "wood",
+    WoodHorizontal = "wood_horizontal",
+    WoodVertical = "wood_vertical"
+}
+
+
 export interface MapSegmentationActionRequestParameters {
     segment_ids: string[];
     iterations?: number;
@@ -165,6 +181,15 @@ export interface MapSegmentEditSplitRequestParameters {
 export interface MapSegmentRenameRequestParameters {
     segment_id: string;
     name: string;
+}
+
+export interface MapSegmentMaterialControlRequestParameters {
+    segment_id: string;
+    material: MapSegmentMaterial;
+}
+
+export interface MapSegmentMaterialControlProperties {
+    supportedMaterials: Array<MapSegmentMaterial>;
 }
 
 export type ConsumableType = "filter" | "brush" | "mop" | "detergent" | "bin" | "cleaning" ;
@@ -577,7 +602,7 @@ export interface CarpetSensorModeControlProperties {
     supportedModes: Array<CarpetSensorMode>
 }
 
-export type AutoEmptyDockAutoEmptyInterval = "infrequent" | "normal" | "frequent" ;
+export type AutoEmptyDockAutoEmptyInterval = "off" | "infrequent" | "normal" | "frequent" ;
 
 export interface AutoEmptyDockAutoEmptyIntervalPayload {
     interval: AutoEmptyDockAutoEmptyInterval
@@ -591,6 +616,16 @@ export interface ObstacleImagesProperties {
         width: number,
         height: number
     }
+}
+
+export type MopDockMopWashTemperature = "cold" | "warm" | "hot" | "scalding" | "boiling";
+
+export interface MopDockMopWashTemperaturePayload {
+    temperature: MopDockMopWashTemperature;
+}
+
+export interface MopDockMopWashTemperatureProperties {
+    supportedTemperatures: Array<MopDockMopWashTemperature>;
 }
 
 export interface UserProfile {
