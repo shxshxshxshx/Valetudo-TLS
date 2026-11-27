@@ -2,6 +2,7 @@ const BEightParser = require("../../msmart/BEightParser");
 const capabilities = require("./capabilities");
 const dtos = require("../../msmart/dtos");
 const entities = require("../../entities");
+const Logger = require("../../Logger");
 const MideaValetudoRobot = require("./MideaValetudoRobot");
 const MSmartConst = require("../../msmart/MSmartConst");
 const MSmartPacket = require("../../msmart/MSmartPacket");
@@ -75,10 +76,7 @@ class MideaModernValetudoRobot extends MideaValetudoRobot {
             value: entities.state.attributes.DockStatusStateAttribute.VALUE.IDLE
         }));
 
-        this.state.upsertFirstMatchingAttribute(new entities.state.attributes.AttachmentStateAttribute({
-            type: entities.state.attributes.AttachmentStateAttribute.TYPE.MOP,
-            attached: false
-        }));
+
     }
 
 
@@ -97,6 +95,43 @@ class MideaModernValetudoRobot extends MideaValetudoRobot {
         }
 
         return this.state;
+    }
+
+    parseAndUpdateState(data) {
+        if (
+            data.water_level > 100 && // undefined also happens to be not > 100
+            !Object.values(this.waterGrades).includes(data.water_level)
+        ) {
+            Logger.warn(`Received unknown water grade ${data.water_level}. Normalizing.`);
+
+            this.sendCommand(
+                new MSmartPacket({
+                    messageType: MSmartPacket.MESSAGE_TYPE.SETTING,
+                    payload: MSmartPacket.buildPayload(
+                        MSmartConst.SETTING.SET_WATER_GRADE,
+                        Buffer.from([
+                            Object.values(this.waterGrades).sort((a, b) => {
+                                return Math.abs(a - data.water_level) - Math.abs(b - data.water_level);
+                            })[0]
+                        ])
+                    )
+                }).toHexString()
+            ).catch(e => {
+                Logger.warn("Error while normalizing water grade", e);
+            });
+
+            return super.parseAndUpdateState(
+                new dtos.MSmartStatusDTO(
+                    Object.assign(
+                        {},
+                        data,
+                        {water_level: undefined}
+                    )
+                )
+            );
+        }
+
+        return super.parseAndUpdateState(data);
     }
 
 
@@ -134,6 +169,23 @@ class MideaModernValetudoRobot extends MideaValetudoRobot {
         if (parsedActiveZonesResponse instanceof dtos.MSmartActiveZonesDTO) {
             await this.handleMapUpdate("evt_active_zones", parsedActiveZonesResponse);
         }
+    }
+
+    getModelDetails() {
+        return Object.assign(
+            {},
+            super.getModelDetails(),
+            {
+                supportedAttachments: [
+                    entities.state.attributes.AttachmentStateAttribute.TYPE.MOP,
+                ],
+                supportedDockComponents: [
+                    entities.state.attributes.DockComponentStateAttribute.TYPE.WATER_TANK_CLEAN,
+                    entities.state.attributes.DockComponentStateAttribute.TYPE.WATER_TANK_DIRTY,
+                    entities.state.attributes.DockComponentStateAttribute.TYPE.DUSTBAG,
+                ]
+            }
+        );
     }
 }
 

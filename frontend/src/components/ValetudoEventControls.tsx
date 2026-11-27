@@ -1,8 +1,7 @@
-import React, {FunctionComponent} from "react";
-import {ConsumableSubType, ConsumableType, ValetudoEvent, ValetudoEventInteraction} from "../api";
-import {Button, ButtonGroup, Stack, styled, Typography} from "@mui/material";
-import {getConsumableName} from "../utils";
-import {formatRelative} from "date-fns";
+import React, { FunctionComponent } from "react";
+import { Button, ButtonGroup, Stack, styled, Typography } from "@mui/material";
+import { ConsumableSubType, ConsumableType, ValetudoEvent, ValetudoEventInteraction } from "../api";
+import {format8601Ish, formatRelative, getConsumableName} from "../utils";
 
 export interface ValetudoEventRenderProps {
     event: ValetudoEvent;
@@ -23,8 +22,8 @@ const EventRow = styled("div")({
 
 const EventTimestamp : FunctionComponent<{timestamp: number | string}> = ({timestamp}) => {
     return (
-        <Typography variant="caption">
-            {formatRelative(new Date(timestamp), new Date())}
+        <Typography variant="caption" title={format8601Ish(new Date(timestamp))} style={{ cursor: "help" }}>
+            {formatRelative(timestamp)}
         </Typography>
     );
 };
@@ -199,6 +198,67 @@ const MissingResourceEventControl: FunctionComponent<ValetudoEventRenderProps> =
         );
     };
 
+const ValetudoUpdatedEventControl: FunctionComponent<ValetudoEventRenderProps> =
+    ({event, interact}) => {
+        const color = event.processed ? "textSecondary" : "textPrimary";
+        const textStyle = event.processed ? {textDecoration: "line-through"} : {};
+
+        return (
+            <EventRow>
+                <Stack>
+                    <EventTimestamp timestamp={event.timestamp}/>
+                    <Typography color={color} style={textStyle} sx={{mr: 1}}>
+                        Valetudo was successfully updated from &apos;{event.previousVersion ?? "unknown"}&apos; to &apos;{event.newVersion ?? "unknown"}&apos;.
+                    </Typography>
+                </Stack>
+                <Button
+                    size="small"
+                    variant={"contained"}
+                    disabled={event.processed}
+                    onClick={() => {
+                        interact({
+                            interaction: "ok"
+                        });
+                    }}
+                    color="info"
+                >
+                    Dismiss
+                </Button>
+            </EventRow>
+        );
+    };
+
+const ValetudoRuntimeErrorEventControl: FunctionComponent<ValetudoEventRenderProps> =
+    ({event, interact}) => {
+        const color = event.processed ? "textSecondary" : "error";
+        const textStyle = event.processed ? {textDecoration: "line-through"} : {};
+
+        return (
+            <EventRow>
+                <Stack>
+                    <EventTimestamp timestamp={event.timestamp}/>
+                    <Typography color={color} style={textStyle} sx={{mr: 1}}>
+                        Valetudo ran into a problem and reincarnated itself. This should never happen.<br/><br/>
+                        {event.description ? event.description: `Reason: ${event.reason}`}
+                    </Typography>
+                </Stack>
+                <Button
+                    size="small"
+                    variant={"contained"}
+                    disabled={event.processed}
+                    onClick={() => {
+                        interact({
+                            interaction: "ok"
+                        });
+                    }}
+                    color="error"
+                >
+                    Dismiss
+                </Button>
+            </EventRow>
+        );
+    };
+
 const UnknownEventControl: FunctionComponent<ValetudoEventRenderProps> =
     ({event}) => {
         return (
@@ -215,5 +275,7 @@ export const eventControls: Record<string, React.ComponentType<ValetudoEventRend
     DustBinFullValetudoEvent: CreateDismissableEventControl("The dust bin is full. Please empty it."),
     MopAttachmentReminderValetudoEvent: CreateDismissableEventControl("The mop is still attached to the robot."),
     MissingResourceValetudoEvent: MissingResourceEventControl,
+    ValetudoUpdatedValetudoEvent: ValetudoUpdatedEventControl,
+    ValetudoRuntimeErrorValetudoEvent: ValetudoRuntimeErrorEventControl,
     Default: UnknownEventControl,
 };

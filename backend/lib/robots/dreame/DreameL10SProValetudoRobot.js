@@ -30,6 +30,7 @@ class DreameL10SProValetudoRobot extends DreameGen2LidarValetudoRobot {
                         [stateAttrs.PresetSelectionStateAttribute.MODE.VACUUM]: 2,
                     }),
                     detailedAttachmentReport: true,
+                    miotPostWriteDelay: 100
                 },
                 options,
             )
@@ -156,7 +157,8 @@ class DreameL10SProValetudoRobot extends DreameGen2LidarValetudoRobot {
         [
             capabilities.DreameCarpetModeControlCapability,
             capabilities.DreameKeyLockCapability,
-            capabilities.DreameLineLaserObstacleAvoidanceControlCapability
+            capabilities.DreameLineLaserObstacleAvoidanceControlCapability,
+            capabilities.DreameCleanRouteControlCapabilityV1,
         ].forEach(capability => {
             this.registerCapability(new capability({robot: this}));
         });
@@ -165,7 +167,6 @@ class DreameL10SProValetudoRobot extends DreameGen2LidarValetudoRobot {
             robot: this,
             quirks: [
                 quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.CARPET_MODE_SENSITIVITY),
-                quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.TIGHT_MOP_PATTERN),
             ]
         }));
 
@@ -173,10 +174,7 @@ class DreameL10SProValetudoRobot extends DreameGen2LidarValetudoRobot {
             value: entities.state.attributes.DockStatusStateAttribute.VALUE.IDLE
         }));
 
-        this.state.upsertFirstMatchingAttribute(new entities.state.attributes.AttachmentStateAttribute({
-            type: entities.state.attributes.AttachmentStateAttribute.TYPE.MOP,
-            attached: false
-        }));
+
     }
 
     getStatePropertiesToPoll() {

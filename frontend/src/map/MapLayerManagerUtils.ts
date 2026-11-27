@@ -2,6 +2,7 @@
 import {RawMapLayer, RawMapLayerMaterial} from "../api/RawMapData";
 import {FourColorTheoremSolver} from "./utils/colors/FourColorTheoremSolver";
 import {PaletteMode} from "@mui/material";
+import {darkPalette, lightPalette} from "../colors";
 
 export type RGBColor = {
     r: number;
@@ -145,6 +146,54 @@ const parquetPixelPatternHandler: PixelPatternHandler = (x, y) => {
 };
 
 /*
+ * . . . . . . . .
+ * . . X . . . X .
+ * . . . . . . . .
+ * X . . . X . . .
+ */
+const carpetLowPilePixelPatternHandler: PixelPatternHandler = (x, y) => {
+    return (x % 4 === 0 && y % 4 === 0) || (x % 4 === 2 && y % 4 === 2);
+};
+
+/*
+ * X X . . X X . .
+ * . . X X . . X X
+ * X X . . X X . .
+ * . . X X . . X X
+ */
+const carpetPixelPatternHandler: PixelPatternHandler = (x, y) => {
+    return (Math.floor(x / 2) + y) % 2 === 0;
+};
+
+/*
+ * \ . . . . . / .
+ * . \ . . . . . /
+ * . . . - - . . .
+ * . . . . . . . .
+ * . . / . . . \ .
+ * . / . . . \ . .
+ * . . . . . . . .
+ * . . . - - . . .
+ */
+const carpetHighPilePixelPatternHandler: PixelPatternHandler = (x, y) => {
+    const pattern = [
+        [1, 0, 0, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 1, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 1, 0],
+        [0, 1, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 0, 0, 0],
+    ];
+
+    const localX = x % 8;
+    const localY = y % 8;
+
+    return pattern[localY][localX] === 1;
+};
+
+/*
  * ? ? ? ? ?
  * ? ? ? ? ?
  * ? ? ? ? ?
@@ -180,6 +229,9 @@ const materialToPixelPatternHandler: {[key in RawMapLayerMaterial]: PixelPattern
     [RawMapLayerMaterial.Wood]: chevronPixelPatternHandler,
     [RawMapLayerMaterial.WoodHorizontal]: createPlankPixelPatternHandler(true),
     [RawMapLayerMaterial.WoodVertical]: createPlankPixelPatternHandler(false),
+    [RawMapLayerMaterial.Carpet]: carpetPixelPatternHandler,
+    [RawMapLayerMaterial.CarpetLow]: carpetLowPilePixelPatternHandler,
+    [RawMapLayerMaterial.CarpetHigh]: carpetHighPilePixelPatternHandler,
 };
 
 export function PROCESS_LAYERS(layers: Array<RawMapLayer>, pixelSize: number, paletteMode: PaletteMode, selectedSegmentIds: string[]) {
@@ -209,7 +261,7 @@ export function PROCESS_LAYERS(layers: Array<RawMapLayer>, pixelSize: number, pa
     }
 
     [...layers].sort((a,b) => {
-        return TYPE_SORT_MAPPING[a.type] - TYPE_SORT_MAPPING[b.type];
+        return (TYPE_SORT_MAPPING[a.type] ?? 0) - (TYPE_SORT_MAPPING[b.type] ?? 0);
     }).forEach(layer => {
         let color: RGBColor = {r: 128, g: 128, b: 128};
         let accentColor: RGBColor = {r: 64, g: 192, b: 128};
@@ -328,15 +380,17 @@ const TYPE_SORT_MAPPING = {
     "wall": 16
 };
 
+const wallColor = hexToRgb("#333333");
+
 export const COLORS: LayerColors = {
-    floor: hexToRgb("#0076ff"),
-    wall: hexToRgb("#333333"),
+    floor: hexToRgb(lightPalette.blue),
+    wall: wallColor,
     segments: [
-        hexToRgb("#19A1A1"),
-        hexToRgb("#7AC037"),
-        hexToRgb("#DF5618"),
-        hexToRgb("#F7C841"),
-        hexToRgb("#9966CC") // "fallback" color
+        hexToRgb(lightPalette.teal),
+        hexToRgb(lightPalette.green),
+        hexToRgb(lightPalette.red),
+        hexToRgb(lightPalette.yellow),
+        hexToRgb(lightPalette.purple) // "fallback" color
     ]
 };
 
@@ -359,9 +413,15 @@ export const BACKGROUND_ACCENT_COLORS: LayerColors = {
 };
 
 export const DARK_COLORS: LayerColors = {
-    floor: adjustRGBColorBrightness(COLORS.floor, -20),
-    wall: COLORS.wall,
-    segments: COLORS.segments.map(c => adjustRGBColorBrightness(c, -20))
+    floor: hexToRgb(darkPalette.blue),
+    wall: wallColor,
+    segments: [
+        hexToRgb(darkPalette.teal),
+        hexToRgb(darkPalette.green),
+        hexToRgb(darkPalette.red),
+        hexToRgb(darkPalette.yellow),
+        hexToRgb(darkPalette.purple) // "fallback" color
+    ]
 };
 
 export const DARK_ACCENT_COLORS: LayerColors = {

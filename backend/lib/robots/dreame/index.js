@@ -12,10 +12,13 @@ module.exports = {
     "DreameL10SProValetudoRobot": require("./DreameL10SProValetudoRobot"),
     "DreameL10SUltraValetudoRobot": require("./DreameL10SUltraValetudoRobot"),
     "DreameL10UltraValetudoRobot": require("./DreameL10UltraValetudoRobot"),
+    "DreameL20UltraValetudoRobot": require("./DreameL20UltraValetudoRobot"),
     "DreameL40UltraValetudoRobot": require("./DreameL40UltraValetudoRobot"),
     "DreameMovaP10ProUltraValetudoRobot": require("./DreameMovaP10ProUltraValetudoRobot"),
     "DreameMovaS20UltraValetudoRobot": require("./DreameMovaS20UltraValetudoRobot"),
+    "DreameMovaV50UltraValetudoRobot": require("./DreameMovaV50UltraValetudoRobot"),
     "DreameMovaZ500ValetudoRobot": require("./DreameMovaZ500ValetudoRobot"),
+    "DreameMovaZ60UltraRollerValetudoRobot": require("./DreameMovaZ60UltraRollerValetudoRobot"),
     "DreameP2148ValetudoRobot": require("./DreameP2148ValetudoRobot"),
     "DreameP2149ValetudoRobot": require("./DreameP2149ValetudoRobot"),
     "DreameP2150ValetudoRobot": require("./DreameP2150ValetudoRobot"),
@@ -23,7 +26,8 @@ module.exports = {
     "DreameW10ProValetudoRobot": require("./DreameW10ProValetudoRobot"),
     "DreameW10ValetudoRobot": require("./DreameW10ValetudoRobot"),
     "DreameX10PlusValetudoRobot": require("./DreameX10PlusValetudoRobot"),
+    "DreameX30UltraValetudoRobot": require("./DreameX30UltraValetudoRobot"),
     "DreameX40MasterValetudoRobot": require("./DreameX40MasterValetudoRobot"),
     "DreameX40UltraValetudoRobot": require("./DreameX40UltraValetudoRobot"),
-    "DreameZ10ProValetudoRobot": require("./DreameZ10ProValetudoRobot")
+    "DreameZ10ProValetudoRobot": require("./DreameZ10ProValetudoRobot"),
 };

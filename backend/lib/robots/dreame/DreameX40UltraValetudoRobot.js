@@ -5,9 +5,11 @@ const DreameGen4ValetudoRobot = require("./DreameGen4ValetudoRobot");
 const DreameQuirkFactory = require("./DreameQuirkFactory");
 const DreameValetudoRobot = require("./DreameValetudoRobot");
 const entities = require("../../entities");
+const LinuxDuststreamingCapability = require("../common/linuxCapabilities/LinuxDuststreamingCapability");
 const Logger = require("../../Logger");
 const MiioValetudoRobot = require("../MiioValetudoRobot");
 const QuirksCapability = require("../../core/capabilities/QuirksCapability");
+const ValetudoMapAnnotation = require("../../entities/core/ValetudoMapAnnotation");
 const ValetudoSelectionPreset = require("../../entities/core/ValetudoSelectionPreset");
 const {IMAGE_FILE_FORMAT} = require("../../utils/const");
 
@@ -166,6 +168,16 @@ class DreameX40UltraValetudoRobot extends DreameGen4ValetudoRobot {
             }
         }));
 
+        this.registerCapability(new LinuxDuststreamingCapability({
+            robot: this,
+            platform: LinuxDuststreamingCapability.PLATFORM.DREAME_MR813,
+            device: "/dev/video0",
+            dimensions: {
+                width: 640,
+                height: 480
+            }
+        }));
+
         this.registerCapability(new capabilities.DreameMapSegmentMaterialControlCapability({
             robot: this,
             miot_actions: {
@@ -187,7 +199,33 @@ class DreameX40UltraValetudoRobot extends DreameGen4ValetudoRobot {
                 capabilities.DreameMapSegmentMaterialControlCapability.MATERIAL.TILE,
                 capabilities.DreameMapSegmentMaterialControlCapability.MATERIAL.WOOD_VERTICAL,
                 capabilities.DreameMapSegmentMaterialControlCapability.MATERIAL.WOOD_HORIZONTAL,
+                capabilities.DreameMapSegmentMaterialControlCapability.MATERIAL.CARPET,
+                capabilities.DreameMapSegmentMaterialControlCapability.MATERIAL.CARPET_LOW,
+                capabilities.DreameMapSegmentMaterialControlCapability.MATERIAL.CARPET_HIGH,
             ]
+        }));
+
+        this.registerCapability(new capabilities.DreameMapAnnotationsCapability({
+            robot: this,
+            supportedAnnotationTypes: [
+                ValetudoMapAnnotation.TYPE.THRESHOLD,
+                ValetudoMapAnnotation.TYPE.CURTAIN,
+                ValetudoMapAnnotation.TYPE.RAMP,
+            ],
+            miot_actions: {
+                map_edit: {
+                    siid: DreameX40UltraValetudoRobot.MIOT_SERVICES.MAP.SIID,
+                    aiid: DreameX40UltraValetudoRobot.MIOT_SERVICES.MAP.ACTIONS.EDIT.AIID
+                }
+            },
+            miot_properties: {
+                mapDetails: {
+                    piid: DreameX40UltraValetudoRobot.MIOT_SERVICES.MAP.PROPERTIES.MAP_DETAILS.PIID
+                },
+                actionResult: {
+                    piid: DreameX40UltraValetudoRobot.MIOT_SERVICES.MAP.PROPERTIES.ACTION_RESULT.PIID
+                }
+            }
         }));
 
 
@@ -209,6 +247,8 @@ class DreameX40UltraValetudoRobot extends DreameGen4ValetudoRobot {
             capabilities.DreameMopExtensionFurnitureLegHandlingControlCapability,
             capabilities.DreameMopDockMopAutoDryingControlCapability,
             capabilities.DreameFloorMaterialDirectionAwareNavigationControlCapability,
+            capabilities.DreameCleanRouteControlCapabilityV2,
+            capabilities.DreameMopDockMopDryingTimeControlCapability,
         ].forEach(capability => {
             this.registerCapability(new capability({robot: this}));
         });
@@ -218,7 +258,6 @@ class DreameX40UltraValetudoRobot extends DreameGen4ValetudoRobot {
             quirks: [
                 quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.CARPET_MODE_SENSITIVITY),
                 quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.MOP_DOCK_MOP_CLEANING_FREQUENCY),
-                quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.MOP_DRYING_TIME),
                 quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.MOP_DOCK_DETERGENT),
                 quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.MOP_DOCK_WET_DRY_SWITCH),
                 quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.MOP_DOCK_AUTO_REPAIR_TRIGGER),
@@ -230,8 +269,9 @@ class DreameX40UltraValetudoRobot extends DreameGen4ValetudoRobot {
                 quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.DETACH_MOPS),
                 quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.MOP_DOCK_CLEANING_PROCESS_TRIGGER),
                 quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.WATER_HOOKUP_TEST_TRIGGER),
-                quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.CLEAN_ROUTE_WITH_QUICK),
                 quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.SIDE_BRUSH_ON_CARPET),
+                quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.CARPET_FIRST),
+                quirkFactory.getQuirk(DreameQuirkFactory.KNOWN_QUIRKS.FAN_SPEED_ONE_TIME_TURBO),
             ]
         }));
 
@@ -239,10 +279,7 @@ class DreameX40UltraValetudoRobot extends DreameGen4ValetudoRobot {
             value: entities.state.attributes.DockStatusStateAttribute.VALUE.IDLE
         }));
 
-        this.state.upsertFirstMatchingAttribute(new entities.state.attributes.AttachmentStateAttribute({
-            type: entities.state.attributes.AttachmentStateAttribute.TYPE.MOP,
-            attached: false
-        }));
+
     }
 
     parseAndUpdateState(data) {
@@ -284,6 +321,23 @@ class DreameX40UltraValetudoRobot extends DreameGen4ValetudoRobot {
             {
                 siid: DreameGen2ValetudoRobot.MIOT_SERVICES.VACUUM_2.SIID,
                 piid: DreameGen2ValetudoRobot.MIOT_SERVICES.VACUUM_2.PROPERTIES.MOP_DOCK_SETTINGS.PIID
+            },
+
+            {
+                siid: DreameGen2ValetudoRobot.MIOT_SERVICES.MISC_STATES.SIID,
+                piid: DreameGen2ValetudoRobot.MIOT_SERVICES.MISC_STATES.PROPERTIES.DOCK_FRESHWATER_TANK_ATTACHMENT.PIID
+            },
+            {
+                siid: DreameGen2ValetudoRobot.MIOT_SERVICES.MISC_STATES.SIID,
+                piid: DreameGen2ValetudoRobot.MIOT_SERVICES.MISC_STATES.PROPERTIES.DOCK_WASTEWATER_TANK_ATTACHMENT.PIID
+            },
+            {
+                siid: DreameGen2ValetudoRobot.MIOT_SERVICES.MISC_STATES.SIID,
+                piid: DreameGen2ValetudoRobot.MIOT_SERVICES.MISC_STATES.PROPERTIES.DOCK_DUSTBAG_ATTACHMENT.PIID
+            },
+            {
+                siid: DreameGen2ValetudoRobot.MIOT_SERVICES.MISC_STATES.SIID,
+                piid: DreameGen2ValetudoRobot.MIOT_SERVICES.MISC_STATES.PROPERTIES.DOCK_DETERGENT_ATTACHMENT.PIID
             }
         ];
     }
@@ -299,6 +353,12 @@ class DreameX40UltraValetudoRobot extends DreameGen4ValetudoRobot {
             {
                 supportedAttachments: [
                     stateAttrs.AttachmentStateAttribute.TYPE.MOP,
+                ],
+                supportedDockComponents: [
+                    stateAttrs.DockComponentStateAttribute.TYPE.WATER_TANK_CLEAN,
+                    stateAttrs.DockComponentStateAttribute.TYPE.WATER_TANK_DIRTY,
+                    stateAttrs.DockComponentStateAttribute.TYPE.DETERGENT,
+                    stateAttrs.DockComponentStateAttribute.TYPE.DUSTBAG,
                 ]
             }
         );

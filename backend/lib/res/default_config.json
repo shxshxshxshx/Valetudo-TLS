@@ -39,19 +39,8 @@
         "identity": {
             "identifier": ""
         },
-        "interfaces": {
-            "homie": {
-                "enabled": true,
-                "cleanAttributesOnShutdown": false
-            },
-            "homeassistant": {
-                "enabled": true,
-                "cleanAutoconfOnShutdown": false
-            }
-        },
         "customizations": {
-            "topicPrefix": "",
-            "provideMapData": true
+            "topicPrefix": ""
         },
         "optionalExposedCapabilities": []
     },
@@ -80,6 +69,9 @@
     },
     "oobe": {
         "welcomeDialogDismissed": false
+    },
+    "duststreaming": {
+        "enabled": false
     },
     "valetudo": {
         "customizations": {

@@ -64,6 +64,9 @@
           "updater": {
             "$ref": "#/components/schemas/UpdaterConfigDTO"
           },
+          "duststreaming": {
+            "$ref": "#/components/schemas/DuststreamingConfigDTO"
+          },
           "timers": {
             "type": "object"
           },
@@ -119,13 +122,12 @@
       "MqttConfigDTO": {
         "type": "object",
         "additionalProperties": false,
-        "required": [
-          "enabled",
-          "connection",
-          "identity",
-          "customizations",
-          "interfaces"
-        ],
+          "required": [
+            "enabled",
+            "connection",
+            "identity",
+            "customizations"
+          ],
         "properties": {
           "enabled": {
             "type": "boolean"
@@ -229,52 +231,6 @@
               "topicPrefix": {
                 "type": "string",
                 "description": "You can override the default \"valetudo\" mqtt topic prefix if you e.g. prefer to group all your mqtt stuff by rooms/floors/protocols"
-              },
-              "provideMapData": {
-                "type": "boolean",
-                "description": "If for some reason you're not interested in receiving map data via MQTT, you can disable that here."
-              }
-            }
-          },
-          "interfaces": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "homie",
-              "homeassistant"
-            ],
-            "properties": {
-              "homie": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "enabled",
-                  "cleanAttributesOnShutdown"
-                ],
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "cleanAttributesOnShutdown": {
-                    "type": "boolean"
-                  }
-                }
-              },
-              "homeassistant": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": [
-                  "enabled",
-                  "cleanAutoconfOnShutdown"
-                ],
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "cleanAutoconfOnShutdown": {
-                    "type": "boolean"
-                  }
-                }
               }
             }
           },
@@ -455,6 +411,18 @@
           }
         }
       },
+      "DuststreamingConfigDTO": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "enabled"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
       "UpdaterConfigDTO": {
         "type": "object",
         "additionalProperties": false,
@@ -598,4 +566,3 @@
     }
   }
 }
-

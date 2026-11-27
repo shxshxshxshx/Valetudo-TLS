@@ -28,7 +28,7 @@ With support for both **Homie** and **Home Assistant Autodiscovery** for MQTT, y
 the open-source smarthome software of your choice.
 
 For more information, check out the [newcomer guide](https://valetudo.cloud/pages/general/newcomer-guide.html),
-the [getting started guide](https://valetudo.cloud/pages/general/getting-started.html) 
+the [getting started guide](https://valetudo.cloud/pages/general/getting-started.html)
 and also the docs in general at [https://valetudo.cloud](https://valetudo.cloud)
 
 There, you will find a list of [supported robots](https://valetudo.cloud/pages/general/supported-robots.html).
@@ -53,7 +53,7 @@ There, you will find a list of [supported robots](https://valetudo.cloud/pages/g
 
 
 ## Further questions?
-[Valetudo Telegram group](https://t.me/+2MsKV8kILxJhNDAy)
+[Valetudo Telegram group](https://t.me/+k-ukcsX2ZYg5MDky)
 
 ## Contributing
 

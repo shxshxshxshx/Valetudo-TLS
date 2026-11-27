@@ -8,6 +8,7 @@ const Logger = require("../Logger");
 const NotImplementedError = require("./NotImplementedError");
 const Semaphore = require("semaphore");
 const Tools = require("../utils/Tools");
+const ValetudoBasedCapability = require("./capabilities/ValetudoBasedCapability");
 const {StatusStateAttribute} = require("../entities/state/attributes");
 
 /**
@@ -41,6 +42,21 @@ class ValetudoRobot {
         this.postActiveStateMapPollCooldownCredits = 0;
 
         this.initInternalSubscriptions();
+
+
+        const modelDetails = this.getModelDetails();
+        for (const attachmentType of modelDetails.supportedAttachments) {
+            this.state.upsertFirstMatchingAttribute(new entities.state.attributes.AttachmentStateAttribute({
+                type: attachmentType,
+                attached: false
+            }));
+        }
+        for (const dockComponentType of modelDetails.supportedDockComponents) {
+            this.state.upsertFirstMatchingAttribute(new entities.state.attributes.DockComponentStateAttribute({
+                type: dockComponentType,
+                value: entities.state.attributes.DockComponentStateAttribute.VALUE.UNKNOWN
+            }));
+        }
     }
 
     /**
@@ -240,7 +256,11 @@ class ValetudoRobot {
 
 
     async shutdown() {
-        //intentional
+        for (const capability of Object.values(this.capabilities)) {
+            if (capability instanceof ValetudoBasedCapability) {
+                await capability.shutdown();
+            }
+        }
     }
 
     getManufacturer() {
@@ -254,6 +274,7 @@ class ValetudoRobot {
     /**
      * @typedef {object} ModelDetails
      * @property {Array<import("../entities/state/attributes/AttachmentStateAttribute").AttachmentStateAttributeType>} supportedAttachments
+     * @property {Array<import("../entities/state/attributes/DockComponentStateAttribute").DockComponentStateAttributeType>} supportedDockComponents
      */
 
     /**
@@ -264,7 +285,8 @@ class ValetudoRobot {
      */
     getModelDetails() {
         return {
-            supportedAttachments: []
+            supportedAttachments: [],
+            supportedDockComponents: []
         };
     }
 

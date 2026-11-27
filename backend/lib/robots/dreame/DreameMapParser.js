@@ -89,6 +89,10 @@ class DreameMapParser {
                 });
             }
 
+            if (additionalData.curid !== undefined) {
+                metaData.vendorMapId = parseInt(additionalData.curid);
+            }
+
             if (additionalData.seg_inf) {
                 Object.keys(additionalData.seg_inf).forEach(segmentId => {
                     if (additionalData.seg_inf[segmentId].name) {
@@ -111,6 +115,15 @@ class DreameMapParser {
                                 break;
                             case 2:
                                 material = mapEntities.MapLayer.MATERIAL.TILE;
+                                break;
+                            case 5:
+                                material = mapEntities.MapLayer.MATERIAL.CARPET_HIGH;
+                                break;
+                            case 6:
+                                material = mapEntities.MapLayer.MATERIAL.CARPET_LOW;
+                                break;
+                            case 7:
+                                material = mapEntities.MapLayer.MATERIAL.CARPET;
                                 break;
                             default:
                                 Logger.warn("Unhandled segment material", additionalData.seg_inf[segmentId].material);
@@ -150,12 +163,19 @@ class DreameMapParser {
                             if (
                                 e.type === mapEntities.PolygonMapEntity.TYPE.NO_GO_AREA ||
                                 e.type === mapEntities.PolygonMapEntity.TYPE.NO_MOP_AREA ||
-                                e.type === mapEntities.PolygonMapEntity.TYPE.CARPET
+                                e.type === mapEntities.PolygonMapEntity.TYPE.CARPET ||
+                                e.type === mapEntities.PolygonMapEntity.TYPE.RAMP
                             ) {
                                 entities.push(e);
                             }
-                        } else if (e instanceof mapEntities.LineMapEntity && e.type === mapEntities.LineMapEntity.TYPE.VIRTUAL_WALL) {
-                            entities.push(e);
+                        } else if (e instanceof mapEntities.LineMapEntity) {
+                            if (
+                                e.type === mapEntities.LineMapEntity.TYPE.VIRTUAL_WALL ||
+                                e.type === mapEntities.LineMapEntity.TYPE.THRESHOLD ||
+                                e.type === mapEntities.LineMapEntity.TYPE.CURTAIN
+                            ) {
+                                entities.push(e);
+                            }
                         }
                     });
 
@@ -256,7 +276,55 @@ class DreameMapParser {
                         )
                     );
                 }
+
+                // Apparently there's also .cliff?
             }
+
+            if (additionalData.vws) {
+                if (Array.isArray(additionalData.vws.vwsl)) {
+                    entities.push(
+                        ...DreameMapParser.PARSE_LINES(
+                            parsedHeader,
+                            additionalData.vws.vwsl,
+                            mapEntities.LineMapEntity.TYPE.THRESHOLD
+                        )
+                    );
+                }
+
+                if (Array.isArray(additionalData.vws.ramp)) {
+                    entities.push(
+                        ...DreameMapParser.PARSE_RAMPS(
+                            parsedHeader,
+                            additionalData.vws.ramp
+                        )
+                    );
+                }
+            }
+
+            if (additionalData.ct) {
+                if (Array.isArray(additionalData.ct.line)) {
+                    entities.push(
+                        ...DreameMapParser.PARSE_LINES(
+                            parsedHeader,
+                            additionalData.ct.line,
+                            mapEntities.LineMapEntity.TYPE.CURTAIN
+                        )
+                    );
+                }
+            }
+
+            /*
+                rec_vw can be an object of recommendations by the robot firmware that may look like this:
+
+                {
+                    "vwsl":    [[x1, y1, x2, y2], ...],   // passable thresholds
+                    "npthrsd": [[x1, y1, x2, y2], ...],   // impassable thresholds
+                    "rect":    [[x1, y1, x2, y2], ...],   // no-go zones
+                    "mop":     [[x1, y1, x2, y2], ...],   // no-mop zones
+                    "line":    [[x1, y1, x2, y2], ...],   // virtual walls
+                    "carpet":  [[x1, y1, x2, y2], ...]    // carpets
+                }
+             */
 
             /*
                 TODO RESEARCH
@@ -666,6 +734,53 @@ class DreameMapParser {
         });
     }
 
+    static PARSE_RAMPS(parsedHeader, ramps) {
+        return ramps.map(r => {
+            const pA = DreameMapParser.CONVERT_TO_VALETUDO_COORDINATES(r[0], r[1]);
+            const pB = DreameMapParser.CONVERT_TO_VALETUDO_COORDINATES(r[2], r[3]);
+            const angle = r[4];
+
+            const minX = Math.min(pA.x, pB.x);
+            const minY = Math.min(pA.y, pB.y);
+            const maxX = Math.max(pA.x, pB.x);
+            const maxY = Math.max(pA.y, pB.y);
+
+            const corners = [
+                { x: minX, y: minY },
+                { x: maxX, y: minY },
+                { x: maxX, y: maxY },
+                { x: minX, y: maxY }
+            ];
+
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            const angleRad = -angle * Math.PI / 180;
+
+            const rotatedCorners = corners.map(point => {
+                const translatedX = point.x - centerX;
+                const translatedY = point.y - centerY;
+
+                const rotatedX = translatedX * Math.cos(angleRad) - translatedY * Math.sin(angleRad);
+                const rotatedY = translatedX * Math.sin(angleRad) + translatedY * Math.cos(angleRad);
+
+                return {
+                    x: Math.round(rotatedX + centerX),
+                    y: Math.round(rotatedY + centerY)
+                };
+            });
+
+            return new mapEntities.PolygonMapEntity({
+                type: mapEntities.PolygonMapEntity.TYPE.RAMP,
+                points: [
+                    rotatedCorners[0].x, rotatedCorners[0].y,
+                    rotatedCorners[1].x, rotatedCorners[1].y,
+                    rotatedCorners[2].x, rotatedCorners[2].y,
+                    rotatedCorners[3].x, rotatedCorners[3].y
+                ]
+            });
+        });
+    }
+
     /**
      * Uploaded dreame Maps are actually base64url strings of zlib compressed data
      *
@@ -780,7 +895,7 @@ DreameMapParser.CONVERT_ANGLE_TO_VALETUDO = function(angle) {
     return ((angle < 180 ? 180 - angle : 360 - angle + 180) + 270) % 360;
 };
 
-const HIDDEN_OBSTACLE_TYPES = ["200"];
+const HIDDEN_OBSTACLE_TYPES = ["200", "204"];
 const OBSTACLE_ID_NAMESPACE = "f90e13dc-3728-4267-bd90-43caa3f460e5";
 
 module.exports = DreameMapParser;

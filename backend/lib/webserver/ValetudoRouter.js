@@ -3,8 +3,10 @@ const fs = require("fs");
 const nestedProperty = require("nested-property");
 const RateLimit = require("express-rate-limit");
 
+const capabilities = require("../core/capabilities");
 const Logger = require("../Logger");
 const Tools = require("../utils/Tools");
+const {isAdmin} = require("./middlewares/auth/OidcMiddleware");
 const {SSEHub, SSEMiddleware} = require("./middlewares/sse");
 
 class ValetudoRouter {
@@ -191,6 +193,32 @@ class ValetudoRouter {
                 res.sendStatus(400);
             }
         });
+
+        this.router.get("/config/duststreaming", (req, res) => {
+            res.json(this.config.get("duststreaming"));
+        });
+
+        // Intentional fork divergence: changing camera settings, including deleting duststreamer, requires admin.
+        this.router.put("/config/duststreaming", (req, res, next) => isAdmin(req, res, next, this.config), this.validator, async (req, res) => {
+            if (typeof req.body.enabled === "boolean") {
+                this.config.set(
+                    "duststreaming",
+                    Object.assign({}, this.config.get("duststreaming"), {enabled: req.body.enabled})
+                );
+
+                if (req.body.enabled === false) {
+                    const capability = this.robot.capabilities[capabilities.DuststreamingCapability.TYPE];
+
+                    if (capability) {
+                        await capability.selfDestruct();
+                    }
+                }
+
+                res.sendStatus(200);
+            } else {
+                res.sendStatus(400);
+            }
+        });
     }
 
     initSSE() {
@@ -267,18 +295,7 @@ class ValetudoRouter {
                 identifier: obj.identity.identifier
             },
             customizations: {
-                topicPrefix: obj.customizations.topicPrefix,
-                provideMapData: obj.customizations.provideMapData
-            },
-            interfaces: {
-                homie: {
-                    enabled: obj.interfaces.homie.enabled,
-                    cleanAttributesOnShutdown: obj.interfaces.homie.cleanAttributesOnShutdown
-                },
-                homeassistant: {
-                    enabled: obj.interfaces.homeassistant.enabled,
-                    cleanAutoconfOnShutdown: obj.interfaces.homeassistant.cleanAutoconfOnShutdown
-                }
+                topicPrefix: obj.customizations.topicPrefix
             },
             optionalExposedCapabilities: Array.isArray(obj.optionalExposedCapabilities) ? [...new Set(obj.optionalExposedCapabilities)] : []
         };

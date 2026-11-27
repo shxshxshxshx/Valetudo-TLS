@@ -1,8 +1,9 @@
 const AttributeSubscriber = require("../../../entities/AttributeSubscriber");
+const BasicControlCapability = require("../../../core/capabilities/BasicControlCapability");
 const CallbackAttributeSubscriber = require("../../../entities/CallbackAttributeSubscriber");
-const DreameMiotHelper = require("../DreameMiotHelper");
 const DreameMiotServices = require("../DreameMiotServices");
 const HighResolutionManualControlCapability = require("../../../core/capabilities/HighResolutionManualControlCapability");
+const Logger = require("../../../Logger");
 const StatusStateAttribute = require("../../../entities/state/attributes/StatusStateAttribute");
 
 /**
@@ -48,8 +49,6 @@ class DreameHighResolutionManualControlCapability extends HighResolutionManualCo
 
         this.lastCommand = new Date(0).getTime();
         this.active = false;
-
-        this.helper = new DreameMiotHelper({robot: this.robot});
     }
 
     /**
@@ -69,6 +68,10 @@ class DreameHighResolutionManualControlCapability extends HighResolutionManualCo
     async disableManualControl() {
         clearTimeout(this.keepAliveTimeout);
         this.active = false;
+
+        if (this.robot.capabilities[BasicControlCapability.TYPE]) {
+            await this.robot.capabilities[BasicControlCapability.TYPE].stop();
+        }
     }
 
     /**
@@ -110,7 +113,7 @@ class DreameHighResolutionManualControlCapability extends HighResolutionManualCo
      * @returns {Promise<void>}
      */
     async sendRemoteControlCommand(velocity, angle, audioHint) {
-        await this.helper.writeProperty(
+        this.robot.miotHelper.writeProperty(
             this.miot_properties.manual_control.siid,
             this.miot_properties.manual_control.piid,
             JSON.stringify({
@@ -118,8 +121,11 @@ class DreameHighResolutionManualControlCapability extends HighResolutionManualCo
                 spdw: angle,
                 audio: audioHint === true ? "true" : "false",
                 random: Math.floor(Math.random() * 1000)
-            })
-        );
+            }),
+            {postWriteDelay: null}
+        ).catch(e => {
+            Logger.debug("Error sending manual control command", e);
+        });
 
         this.lastCommand = new Date().getTime();
     }

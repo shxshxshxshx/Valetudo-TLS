@@ -22,9 +22,7 @@ class MapNodeMqttHandle extends NodeMqttHandle {
         super(Object.assign(options, {
             topicName: "MapData",
             friendlyName: "Map data",
-            type: "Map",
-            helpText: "This handle groups access to map data. It is only enabled if `provideMapData` is enabled in " +
-                "the MQTT config."
+            type: "Map"
         }));
 
         this.robot = options.robot;
@@ -52,7 +50,7 @@ class MapNodeMqttHandle extends NodeMqttHandle {
                 datatype: DataType.STRING,
                 format: "json",
                 getter: async () => {
-                    if (this.robot.state.map === null || !(this.controller.currentConfig.customizations.provideMapData ?? true)|| !this.controller.isInitialized) {
+                    if (this.robot.state.map === null || !this.controller.isInitialized) {
                         return {};
                     }
 
@@ -64,6 +62,10 @@ class MapNodeMqttHandle extends NodeMqttHandle {
                     await this.controller.hassAnchorProvider.getAnchor(
                         HassAnchor.ANCHOR.MAP_SEGMENTS_LEN
                     ).post(Object.keys(res).length);
+
+                    await this.controller.hassAnchorProvider.getAnchor(
+                        HassAnchor.ANCHOR.MAP_SEGMENTS
+                    ).post(res);
 
                     return res;
                 },
@@ -158,7 +160,7 @@ class MapNodeMqttHandle extends NodeMqttHandle {
      * @return {Promise<Buffer|null>}
      */
     async getMapData(wrapInPng) {
-        if (this.robot.state.map === null || !(this.controller.currentConfig.customizations.provideMapData ?? true) || !this.controller.isInitialized) {
+        if (this.robot.state.map === null || !this.controller.isInitialized) {
             return null;
         }
         const robot = this.robot;

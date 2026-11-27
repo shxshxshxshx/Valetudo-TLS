@@ -1,5 +1,6 @@
 import {
     Box,
+    Button,
     Card,
     CardContent,
     Checkbox,
@@ -46,7 +47,6 @@ import {InputProps} from "@mui/material/Input/Input";
 import InfoBox from "../../components/InfoBox";
 import PaperContainer from "../../components/PaperContainer";
 import {MQTTIcon} from "../../components/CustomIcons";
-import {LoadingButton} from "@mui/lab";
 import TextInformationGrid from "../../components/TextInformationGrid";
 import DetailPageHeaderRow from "../../components/DetailPageHeaderRow";
 
@@ -650,40 +650,6 @@ const MQTTConnectivity = (): React.ReactElement => {
                 </GroupBox>
             </GroupBox>
 
-            <GroupBox title="Integrations">
-                <GroupBox title="Home Assistant" checked={mqttConfiguration.interfaces.homeassistant.enabled}
-                    onChange={(e) => {
-                        modifyMQTTConfig(e.target.checked, ["interfaces", "homeassistant", "enabled"]);
-                    }}>
-                    <FormControl component="fieldset" variant="standard">
-                        <FormGroup sx={{marginLeft: "1rem"}}>
-                            <MQTTSwitch
-                                mqttConfiguration={mqttConfiguration}
-                                modifyMQTTConfig={modifyMQTTConfig}
-                                title="Delete autodiscovery metadata on shutdown"
-                                configPath={["interfaces", "homeassistant", "cleanAutoconfOnShutdown"]}
-                            />
-                        </FormGroup>
-                    </FormControl>
-                </GroupBox>
-
-                <GroupBox title="Homie" checked={mqttConfiguration.interfaces.homie.enabled}
-                    onChange={(e) => {
-                        modifyMQTTConfig(e.target.checked, ["interfaces", "homie", "enabled"]);
-                    }}>
-                    <FormControl component="fieldset" variant="standard">
-                        <FormGroup sx={{marginLeft: "1rem"}}>
-                            <MQTTSwitch
-                                mqttConfiguration={mqttConfiguration}
-                                modifyMQTTConfig={modifyMQTTConfig}
-                                title="Delete autodiscovery metadata on shutdown"
-                                configPath={["interfaces", "homie", "cleanAttributesOnShutdown"]}
-                            />
-                        </FormGroup>
-                    </FormControl>
-                </GroupBox>
-            </GroupBox>
-
             <GroupBox title="Customizations">
                 <MQTTInput
                     mqttConfiguration={mqttConfiguration}
@@ -764,12 +730,6 @@ const MQTTConnectivity = (): React.ReactElement => {
                             /<wbr/>BatteryStateAttribute/<wbr/>level
                     </span>
                 </Typography>
-                <MQTTSwitch
-                    mqttConfiguration={mqttConfiguration}
-                    modifyMQTTConfig={modifyMQTTConfig}
-                    title="Provide map data"
-                    configPath={["customizations", "provideMapData"]}
-                />
             </GroupBox>
 
             {
@@ -814,7 +774,7 @@ const MQTTConnectivity = (): React.ReactElement => {
 
             <Grid2 container>
                 <Grid2 style={{marginLeft: "auto"}}>
-                    <LoadingButton
+                    <Button
                         disabled={!configurationModified}
                         loading={mqttConfigurationUpdating}
                         color="primary"
@@ -827,7 +787,7 @@ const MQTTConnectivity = (): React.ReactElement => {
                         }}
                     >
                         Save configuration
-                    </LoadingButton>
+                    </Button>
                 </Grid2>
             </Grid2>
         </>

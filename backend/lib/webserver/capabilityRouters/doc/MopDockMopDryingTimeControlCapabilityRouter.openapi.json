@@ -1,0 +1,107 @@
+{
+  "/api/v2/robot/capabilities/MopDockMopDryingTimeControlCapability": {
+    "get": {
+      "tags": [
+        "MopDockMopDryingTimeControlCapability"
+      ],
+      "summary": "Get current mop dock mop drying time",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "duration": {
+                    "type": "string",
+                    "enum": [
+                      "2h",
+                      "3h",
+                      "4h",
+                      "5h",
+                      "quiet",
+                      "cold"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "put": {
+      "tags": [
+        "MopDockMopDryingTimeControlCapability"
+      ],
+      "summary": "Set mop dock mop drying time",
+      "requestBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "duration": {
+                  "type": "string",
+                  "enum": [
+                    "2h",
+                    "3h",
+                    "4h",
+                    "5h",
+                    "quiet",
+                    "cold"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "$ref": "#/components/responses/200"
+        },
+        "400": {
+          "$ref": "#/components/responses/400"
+        }
+      }
+    }
+  },
+  "/api/v2/robot/capabilities/MopDockMopDryingTimeControlCapability/properties": {
+    "get": {
+      "tags": [
+        "MopDockMopDryingTimeControlCapability"
+      ],
+      "summary": "Get various capability-related properties",
+      "responses": {
+        "200": {
+          "description": "Ok",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "supportedDurations": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "2h",
+                        "3h",
+                        "4h",
+                        "5h",
+                        "quiet",
+                        "cold"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,6 +2,9 @@ import axios from "axios";
 import { RawMapData } from "./RawMapData";
 import {PresetSelectionState, PresetValue, RobotAttribute} from "./RawRobotState";
 import {
+    AutoEmptyDockAutoEmptyDuration,
+    AutoEmptyDockAutoEmptyDurationControlProperties,
+    AutoEmptyDockAutoEmptyDurationPayload,
     AutoEmptyDockAutoEmptyInterval,
     AutoEmptyDockAutoEmptyIntervalPayload,
     AutoEmptyDockAutoEmptyIntervalProperties,
@@ -9,6 +12,9 @@ import {
     CarpetSensorMode,
     CarpetSensorModeControlProperties,
     CarpetSensorModePayload,
+    CleanRoute,
+    CleanRouteControlProperties,
+    CleanRoutePayload,
     CombinedVirtualRestrictionsProperties,
     CombinedVirtualRestrictionsUpdateRequestParameters,
     ConsumableId,
@@ -20,6 +26,7 @@ import {
     LogLevelResponse,
     ManualControlInteraction,
     ManualControlProperties,
+    MapAnnotationsProperties,
     MapSegmentationActionRequestParameters,
     MapSegmentationProperties,
     MapSegmentEditJoinRequestParameters,
@@ -27,6 +34,9 @@ import {
     MapSegmentMaterialControlProperties,
     MapSegmentMaterialControlRequestParameters,
     MapSegmentRenameRequestParameters,
+    MopDockMopDryingDuration,
+    MopDockMopDryingTimeControlProperties,
+    MopDockMopDryingTimePayload,
     MopDockMopWashTemperature,
     MopDockMopWashTemperaturePayload,
     MopDockMopWashTemperatureProperties,
@@ -38,6 +48,8 @@ import {
     NTPClientConfiguration,
     NTPClientStatus,
     ObstacleImagesProperties,
+    DuststreamingProperties,
+    DuststreamingConfiguration,
     Point,
     Quirk,
     RobotInformation,
@@ -60,6 +72,7 @@ import {
     ValetudoEvent,
     ValetudoEventInteractionContext,
     ValetudoInformation,
+    ValetudoMapAnnotation,
     ValetudoVersion,
     ValetudoWifiNetwork,
     VoicePackManagementCommand,
@@ -1227,6 +1240,32 @@ export const fetchObstacleImagesProperties = async (): Promise<ObstacleImagesPro
         });
 };
 
+export const fetchDuststreamingProperties = async (): Promise<DuststreamingProperties> => {
+    return valetudoAPI
+        .get<DuststreamingProperties>(`/robot/capabilities/${Capability.Duststreaming}/properties`)
+        .then(({ data }) => {
+            return data;
+        });
+};
+
+export const fetchDuststreamingConfiguration = async (): Promise<DuststreamingConfiguration> => {
+    return valetudoAPI
+        .get<DuststreamingConfiguration>("/valetudo/config/duststreaming")
+        .then(({ data }) => {
+            return data;
+        });
+};
+
+export const sendDuststreamingConfiguration = async (configuration: DuststreamingConfiguration): Promise<void> => {
+    return valetudoAPI
+        .put("/valetudo/config/duststreaming", configuration)
+        .then(({status}) => {
+            if (status !== 200) {
+                throw new Error("Could not update dust streaming configuration");
+            }
+        });
+};
+
 export const fetchUserProfile = async (): Promise<UserProfile> => {
     return valetudoAPI
         .get<UserProfile>("/profile")
@@ -1275,6 +1314,26 @@ export const sendMopDockMopAutoDryingControlState = async (enable: boolean): Pro
     await sendToggleMutation(Capability.MopDockMopAutoDryingControl, enable);
 };
 
+
+export const fetchMapAnnotationsProperties = async (): Promise<MapAnnotationsProperties> => {
+    return valetudoAPI
+        .get<MapAnnotationsProperties>(
+            `/robot/capabilities/${Capability.MapAnnotations}/properties`
+        )
+        .then(({data}) => {
+            return data;
+        });
+};
+
+export const sendMapAnnotationsUpdate = async (
+    mapAnnotations: Array<ValetudoMapAnnotation>
+): Promise<void> => {
+    await valetudoAPI.put(
+        `/robot/capabilities/${Capability.MapAnnotations}`,
+        mapAnnotations
+    );
+};
+
 export const fetchFloorMaterialDirectionAwareNavigationControlState = async (): Promise<SimpleToggleState> => {
     return valetudoAPI
         .get<SimpleToggleState>(`/robot/capabilities/${Capability.FloorMaterialDirectionAwareNavigationControl}`)
@@ -1287,3 +1346,86 @@ export const sendFloorMaterialDirectionAwareNavigationControlState = async (enab
     await sendToggleMutation(Capability.FloorMaterialDirectionAwareNavigationControl, enable);
 };
 
+export const sendCleanRoute = async (payload: CleanRoutePayload): Promise<void> => {
+    return valetudoAPI
+        .put(`/robot/capabilities/${Capability.CleanRouteControl}`, payload)
+        .then(({status}) => {
+            if (status !== 200) {
+                throw new Error("Could not send clean route");
+            }
+        });
+};
+
+export const fetchCleanRoute = async (): Promise<CleanRoute> => {
+    return valetudoAPI
+        .get<CleanRoutePayload>(`/robot/capabilities/${Capability.CleanRouteControl}`)
+        .then(({data}) => {
+            return data.route;
+        });
+};
+
+export const fetchCleanRouteControlProperties = async (): Promise<CleanRouteControlProperties> => {
+    return valetudoAPI
+        .get<CleanRouteControlProperties>(
+            `/robot/capabilities/${Capability.CleanRouteControl}/properties`
+        )
+        .then(({data}) => {
+            return data;
+        });
+};
+
+export const sendMopDockMopDryingTime = async (payload: MopDockMopDryingTimePayload): Promise<void> => {
+    return valetudoAPI
+        .put(`/robot/capabilities/${Capability.MopDockMopDryingTimeControl}`, payload)
+        .then(({status}) => {
+            if (status !== 200) {
+                throw new Error("Could not send mop dock mop drying time");
+            }
+        });
+};
+
+export const fetchMopDockMopDryingTime = async (): Promise<MopDockMopDryingDuration> => {
+    return valetudoAPI
+        .get<MopDockMopDryingTimePayload>(`/robot/capabilities/${Capability.MopDockMopDryingTimeControl}`)
+        .then(({data}) => {
+            return data.duration;
+        });
+};
+
+export const fetchMopDockMopDryingTimeControlProperties = async (): Promise<MopDockMopDryingTimeControlProperties> => {
+    return valetudoAPI
+        .get<MopDockMopDryingTimeControlProperties>(
+            `/robot/capabilities/${Capability.MopDockMopDryingTimeControl}/properties`
+        )
+        .then(({data}) => {
+            return data;
+        });
+};
+
+export const sendAutoEmptyDockAutoEmptyDuration = async (payload: AutoEmptyDockAutoEmptyDurationPayload): Promise<void> => {
+    return valetudoAPI
+        .put(`/robot/capabilities/${Capability.AutoEmptyDockAutoEmptyDurationControl}`, payload)
+        .then(({status}) => {
+            if (status !== 200) {
+                throw new Error("Could not send auto empty dock auto empty duration");
+            }
+        });
+};
+
+export const fetchAutoEmptyDockAutoEmptyDuration = async (): Promise<AutoEmptyDockAutoEmptyDuration> => {
+    return valetudoAPI
+        .get<AutoEmptyDockAutoEmptyDurationPayload>(`/robot/capabilities/${Capability.AutoEmptyDockAutoEmptyDurationControl}`)
+        .then(({data}) => {
+            return data.duration;
+        });
+};
+
+export const fetchAutoEmptyDockAutoEmptyDurationControlProperties = async (): Promise<AutoEmptyDockAutoEmptyDurationControlProperties> => {
+    return valetudoAPI
+        .get<AutoEmptyDockAutoEmptyDurationControlProperties>(
+            `/robot/capabilities/${Capability.AutoEmptyDockAutoEmptyDurationControl}/properties`
+        )
+        .then(({data}) => {
+            return data;
+        });
+};

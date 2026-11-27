@@ -13,7 +13,7 @@ img_selected.src = segmentSelectedIconSVG;
 
 
 class SegmentLabelMapStructure extends MapStructure {
-    public static TYPE = "SegmentLabelMapStructure";
+    public static readonly TYPE = "SegmentLabelMapStructure";
 
     id: string;
     selected: boolean;
@@ -111,7 +111,7 @@ class SegmentLabelMapStructure extends MapStructure {
 
         const textPadding = 0.75 * scaleFactor;
         const finalY = iconBottomEdgeY + textPadding;
-        const baseFontSize = 1.75 * scaleFactor;
+        const baseFontSize = 2.75 * scaleFactor;
 
         const linesToDraw= [];
 
@@ -146,10 +146,6 @@ class SegmentLabelMapStructure extends MapStructure {
 
     onTap() {
         this.selected = !this.selected;
-    }
-
-    getType(): string {
-        return SegmentLabelMapStructure.TYPE;
     }
 }
 

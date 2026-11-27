@@ -123,6 +123,8 @@ class MideaMapParser {
             case "displayed_curtain":
             case "user_deleted_detected_door_sill":
             case "displayed_door_sill":
+            case "detect_file_segment_info":
+            case "imu_file_segment_info":
                 // Ignored for now
                 break;
             case "device_runtime_status":
@@ -235,6 +237,15 @@ class MideaMapParser {
                             pixels.wall.push(coords);
                             break;
                         case 100:
+                        case 101: // just a guess
+                        case 102: // just a guess
+                        case 103: // just a guess
+                        case 104: // just a guess
+                        case 105: // just a guess
+                        case 106: // just a guess
+                        case 107: // just a guess
+                        case 108: // just a guess
+                        case 109: // just a guess
                             pixels.floor.push(coords);
                             break;
 
@@ -305,15 +316,20 @@ class MideaMapParser {
         const roomMetadata = this.mapHacksProvider.getRoomMetadata();
         Object.keys(pixels.segments).forEach((segmentId) => {
             if (pixels.segments[segmentId].length > 0) {
+                const metaData = {
+                    segmentId: segmentId,
+                    material: FLOOR_MATERIAL_MAPPING[roomMetadata[segmentId]?.material] ?? mapEntities.MapLayer.MATERIAL.GENERIC,
+                    active: this.activeSegments.includes(segmentId) // Only available on the J15 Max (and newer?)
+                };
+
+                if (roomMetadata[segmentId]?.name && roomMetadata[segmentId].name !== "未命名") { // Unnamed in CN
+                    metaData.name = roomMetadata[segmentId].name;
+                }
+
                 layers.push(new mapEntities.MapLayer({
                     pixels: pixels.segments[segmentId].sort(mapEntities.MapLayer.COORDINATE_TUPLE_SORT).flat(),
                     type: mapEntities.MapLayer.TYPE.SEGMENT,
-                    metaData: {
-                        segmentId: segmentId,
-                        material: FLOOR_MATERIAL_MAPPING[roomMetadata[segmentId]?.material] ?? mapEntities.MapLayer.MATERIAL.GENERIC,
-                        // Segment names appear to be stored in the cloud and in the cloud only :(
-                        active: this.activeSegments.includes(segmentId) // Only available on the J15 Max (and newer?)
-                    }
+                    metaData: metaData
                 }));
             }
         });

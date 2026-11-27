@@ -28,6 +28,7 @@ class DreameValetudoRobot extends MiioValetudoRobot {
      * @param {import("../../Configuration")} options.config
      * @param {import("../../ValetudoEventStore")} options.valetudoEventStore
      * @param {object} [options.operationModes]
+     * @param {number} [options.miotPostWriteDelay]
      * @param {object} options.miotServices
      * @param {object} options.miotServices.MAP
      * @param {number} options.miotServices.MAP.SIID
@@ -40,8 +41,7 @@ class DreameValetudoRobot extends MiioValetudoRobot {
      */
     constructor(options) {
         super(options);
-        this.helper = new DreameMiotHelper({robot: this});
-
+        this.miotHelper = new DreameMiotHelper({robot: this, postWriteDelay: options.miotPostWriteDelay});
 
         this.operationModes = options.operationModes ?? {};
         this.miotServices = options.miotServices;
@@ -758,7 +758,7 @@ DreameValetudoRobot.MAP_ERROR_CODE = (vendorErrorCode) => {
             parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.UNKNOWN;
             parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.UNKNOWN;
             parameters.subsystem = ValetudoRobotError.SUBSYSTEM.CORE;
-            parameters.message = `Internal error ${vendorErrorCode}`; //"AVA_HEALTH_STATUS_TYPE_CARPET_WATEBOX_START" //TODO What does the dreame error string mean?
+            parameters.message = "Attempted to start mopping while on carpet";
             break;
         case "56":
             parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.UNKNOWN;
@@ -866,7 +866,27 @@ DreameValetudoRobot.MAP_ERROR_CODE = (vendorErrorCode) => {
             parameters.message = "Failed to attach mop pads";
             break;
 
+        case "75":
+            parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.TRANSIENT;
+            parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.INFO;
+            parameters.subsystem = ValetudoRobotError.SUBSYSTEM.POWER;
+            parameters.message = "Low battery";
+            break;
+
+        case "82":
+            parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.TRANSIENT;
+            parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.WARNING;
+            parameters.subsystem = ValetudoRobotError.SUBSYSTEM.NAVIGATION;
+            parameters.message = "Robot stuck or trapped";
+            break;
+
         case "91":
+            parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.TRANSIENT;
+            parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.WARNING;
+            parameters.subsystem = ValetudoRobotError.SUBSYSTEM.NAVIGATION;
+            parameters.message = "Cannot reach target";
+            break;
+        case "93":
             parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.TRANSIENT;
             parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.WARNING;
             parameters.subsystem = ValetudoRobotError.SUBSYSTEM.NAVIGATION;
@@ -877,6 +897,13 @@ DreameValetudoRobot.MAP_ERROR_CODE = (vendorErrorCode) => {
             parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.WARNING;
             parameters.subsystem = ValetudoRobotError.SUBSYSTEM.NAVIGATION;
             parameters.message = "Cannot reach target";
+            break;
+
+        case "98":
+            parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.TRANSIENT;
+            parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.WARNING;
+            parameters.subsystem = ValetudoRobotError.SUBSYSTEM.NAVIGATION;
+            parameters.message = "Robot stuck or trapped";
             break;
 
 
@@ -987,6 +1014,12 @@ DreameValetudoRobot.MAP_ERROR_CODE = (vendorErrorCode) => {
             parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.ERROR;
             parameters.subsystem = ValetudoRobotError.SUBSYSTEM.DOCK;
             parameters.message = "Mop Dock Tray full of water";
+            break;
+        case "120":
+            parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.PERMANENT;
+            parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.ERROR;
+            parameters.subsystem = ValetudoRobotError.SUBSYSTEM.DOCK;
+            parameters.message = "Mop pads not in the dock. Attach failed.";
             break;
         case "121":
             parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.PERMANENT;

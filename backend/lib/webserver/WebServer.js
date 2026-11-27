@@ -8,12 +8,11 @@ const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const swaggerValidation = require("openapi-validator-middleware");
 
-const listEndpoints = require("express-list-endpoints");
-
 const Logger = require("../Logger");
 
 const notFoundPages = require("./res/404");
 
+const KillswitchRouter = require("./KillswitchRouter");
 const Middlewares = require("./middlewares");
 const ProfileRouter = require("./ProfileRouter");
 const RobotRouter = require("./RobotRouter");
@@ -24,13 +23,17 @@ const fs = require("fs");
 const MQTTRouter = require("./MQTTRouter");
 const NetworkAdvertisementManagerRouter = require("./NetworkAdvertisementManagerRouter");
 const NTPClientRouter = require("./NTPClientRouter");
+// pkg's snapshot loader cannot resolve the SDK's ESM dependencies. Bundle them for packaged builds.
+/** @type {typeof import("express-openid-connect")} */
+const OidcAuth = Object.hasOwn(process, "pkg") ?
+    require("../res/express-openid-connect.cjs") :
+    require("express-openid-connect");
 const SSDPRouter = require("./SSDPRouter");
 const SystemRouter = require("./SystemRouter");
 const TimerRouter = require("./TimerRouter");
 const Tools = require("../utils/Tools");
 const UpdaterRouter = require("./UpdaterRouter");
 const ValetudoEventRouter = require("./ValetudoEventRouter");
-const OidcAuth = require("express-openid-connect");
 const {isAdmin, isUser} = require("./middlewares/auth/OidcMiddleware");
 
 class WebServer {
@@ -44,6 +47,7 @@ class WebServer {
      * @param {import("../scheduler/Scheduler")} options.scheduler
      * @param {import("../ValetudoEventStore")} options.valetudoEventStore
      * @param {import("../Configuration")} options.config
+     * @param {import("../PhoenixManager")} options.phoenixManager
      * @param {import("../utils/ValetudoHelper")} options.valetudoHelper
      */
     constructor(options) {
@@ -51,11 +55,16 @@ class WebServer {
 
         this.robot = options.robot;
         this.config = options.config;
+        this.phoenixManager = options.phoenixManager;
         this.valetudoHelper = options.valetudoHelper;
 
         this.valetudoEventStore = options.valetudoEventStore;
 
         this.webserverConfig = this.config.get("webserver");
+
+        if (this.webserverConfig.auth?.sso?.oidc?.enabled !== true) {
+            throw new Error("OIDC authentication must be enabled in this fork");
+        }
 
         this.port = this.webserverConfig.port;
 
@@ -91,6 +100,16 @@ class WebServer {
         });
         const dynamicAuth = dynamicMiddleware.create([]);
         this.app.use(dynamicAuth.handle());
+
+        this.app.use("/_killswitch", (req, res, next) => {
+            // This deletes the streaming executable. Anonymous access must stay disabled even if UI auth is off.
+            if (!this.basicAuthInUse && !this.oidcInUse) {
+                return res.status(401).json({error: "AuthenticationRequired"});
+            }
+
+            // Intentional divergence from upstream: this fork assigns the killswitch to the admin role.
+            return isAdmin(req, res, next, this.config);
+        }, new KillswitchRouter({robot: this.robot, config: this.config}).getRouter());
 
         if (this.webserverConfig.auth.basicAuth.enabled === true && !this.oidcInUse) {
             dynamicAuth.use(authMiddleware);
@@ -190,32 +209,13 @@ class WebServer {
 
         this.app.use("/api/v2/timers/", (res, req, next) => isAdmin(res, req, next, this.config), new TimerRouter({config: this.config, robot: this.robot, validator: this.validator, scheduler: options.scheduler}).getRouter());
 
-        this.app.use("/api/v2/system/", (res, req, next) => isAdmin(res, req, next, this.config), new SystemRouter({}).getRouter());
+        this.app.use("/api/v2/system/", (res, req, next) => isAdmin(res, req, next, this.config), new SystemRouter({phoenixManager: this.phoenixManager}).getRouter());
 
         this.app.use("/api/v2/events/", new ValetudoEventRouter({valetudoEventStore: this.valetudoEventStore, validator: this.validator}).getRouter());
 
         this.app.use("/api/v2/updater/", (res, req, next) => isAdmin(res, req, next, this.config), new UpdaterRouter({config: this.config, updater: options.updater, validator: this.validator}).getRouter());
 
         this.app.use("/_ssdp/", new SSDPRouter({config: this.config, robot: this.robot, valetudoHelper: this.valetudoHelper}).getRouter());
-
-        this.app.get("/api/v2", (req, res) => {
-            let endpoints = listEndpoints(this.app);
-            let endpointsMap;
-            endpoints = endpoints.sort((a,b) => {
-                if (a.path > b.path) {
-                    return 1;
-                } else if (b.path > a.path) {
-                    return -1;
-                } else {
-                    return 0;
-                }
-            });
-            endpointsMap = endpoints.reduce((acc, curr) => {
-                acc[curr.path] = {methods: curr.methods}; return acc;
-            }, {});
-
-            res.json(endpointsMap);
-        });
 
 
         this.robot.initModelSpecificWebserverRoutes(this.app);
@@ -231,7 +231,7 @@ class WebServer {
             }
         });
 
-        this.app.get("*", (req, res) => {
+        this.app.get("*splat", (req, res) => {
             res.status(404).send(Tools.GET_RANDOM_ARRAY_ELEMENT(Object.values(notFoundPages)));
         });
 

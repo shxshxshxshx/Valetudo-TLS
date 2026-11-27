@@ -120,6 +120,9 @@ import {
     fetchObstacleImagesProperties,
     fetchObstacleImagesState,
     sendObstacleImagesState,
+    fetchDuststreamingProperties,
+    fetchDuststreamingConfiguration,
+    sendDuststreamingConfiguration,
     fetchHighResolutionManualControlState,
     sendHighResolutionManualControlInteraction,
     fetchMopExtensionControlState,
@@ -139,6 +142,17 @@ import {
     sendSetSegmentMaterialCommand,
     fetchFloorMaterialDirectionAwareNavigationControlState,
     sendFloorMaterialDirectionAwareNavigationControlState,
+    fetchCleanRoute,
+    sendCleanRoute,
+    fetchCleanRouteControlProperties,
+    fetchMopDockMopDryingTime,
+    sendMopDockMopDryingTime,
+    fetchMopDockMopDryingTimeControlProperties,
+    fetchAutoEmptyDockAutoEmptyDuration,
+    sendAutoEmptyDockAutoEmptyDuration,
+    fetchAutoEmptyDockAutoEmptyDurationControlProperties,
+    fetchMapAnnotationsProperties,
+    sendMapAnnotationsUpdate,
     fetchUserProfile,
 } from "./client";
 import {
@@ -149,9 +163,12 @@ import {
 } from "./RawRobotState";
 import { isAttribute } from "./utils";
 import {
+    AutoEmptyDockAutoEmptyDuration,
     AutoEmptyDockAutoEmptyInterval,
     Capability,
+    DuststreamingConfiguration,
     CarpetSensorMode,
+    CleanRoute,
     CombinedVirtualRestrictionsUpdateRequestParameters,
     ConsumableId,
     DoNotDisturbConfiguration,
@@ -163,6 +180,7 @@ import {
     MapSegmentEditSplitRequestParameters,
     MapSegmentMaterialControlRequestParameters,
     MapSegmentRenameRequestParameters,
+    MopDockMopDryingDuration,
     MopDockMopWashTemperature,
     MQTTConfiguration,
     NetworkAdvertisementConfiguration,
@@ -175,6 +193,7 @@ import {
     ValetudoCustomizations,
     ValetudoEventInteractionContext,
     ValetudoInformation,
+    ValetudoMapAnnotation,
     VoicePackManagementCommand,
     WifiConfiguration,
     ZoneActionRequestParameters,
@@ -240,6 +259,8 @@ enum QueryKey {
     CarpetSensorModeProperties = "carpet_sensor_mode_properties",
     ObstacleImages = "obstacle_image",
     ObstacleImagesProperties = "obstacle_image_properties",
+    DuststreamingProperties = "duststreaming_properties",
+    DuststreamingConfiguration = "duststreaming_configuration",
     MopExtensionControl = "mop_extension_control",
     CameraLightControl = "camera_light_control",
     MopDockMopWashTemperature = "mop_dock_mop_wash_temperature",
@@ -249,6 +270,13 @@ enum QueryKey {
     MopDockMopAutoDryingControl = "mop_dock_mop_auto_drying_control",
     MapSegmentMaterialControlProperties = "map_segment_material_control_properties",
     FloorMaterialDirectionAwareNavigationControl = "floor_material_direction_aware_navigation_control",
+    CleanRouteControl = "clean_route_control",
+    CleanRouteControlProperties = "clean_route_control_properties",
+    MopDockMopDryingTimeControl = "mop_dock_mop_drying_time_control",
+    MopDockMopDryingTimeControlProperties = "mop_dock_mop_drying_time_control_properties",
+    AutoEmptyDockAutoEmptyDurationControl = "auto_empty_dock_auto_empty_duration_control",
+    AutoEmptyDockAutoEmptyDurationControlProperties = "auto_empty_dock_auto_empty_duration_control_properties",
+    MapAnnotationsProperties = "map_annotations_properties",
     UserProfile = "user_profile"
 }
 
@@ -1624,6 +1652,44 @@ export const prefetchObstacleImagesProperties = async (queryClient : QueryClient
     }
 };
 
+export const useDuststreamingPropertiesQuery = () => {
+    return useQuery( {
+        queryKey: [QueryKey.DuststreamingProperties],
+        queryFn: fetchDuststreamingProperties,
+
+        staleTime: Infinity,
+    });
+};
+
+export const useDuststreamingConfigurationQuery = (options?: { enabled?: boolean }) => {
+    return useQuery( {
+        queryKey: [QueryKey.DuststreamingConfiguration],
+        queryFn: fetchDuststreamingConfiguration,
+
+        enabled: options?.enabled ?? true,
+        staleTime: Infinity,
+    });
+};
+
+export const useDuststreamingConfigurationMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (configuration: DuststreamingConfiguration) => {
+            return sendDuststreamingConfiguration(configuration).then(fetchDuststreamingConfiguration).then((configuration) => {
+                queryClient.setQueryData<DuststreamingConfiguration>([QueryKey.DuststreamingConfiguration], configuration, {
+                    updatedAt: Date.now(),
+                });
+
+                queryClient.invalidateQueries({
+                    queryKey: [QueryKey.DuststreamingProperties]
+                });
+            });
+        },
+        onError: useOnSettingsChangeError("Camera Streaming")
+    });
+};
+
 export const useMopDockMopWashTemperatureQuery = () => {
     return useQuery({
         queryKey: [QueryKey.MopDockMopWashTemperature],
@@ -1725,6 +1791,114 @@ export const useFloorMaterialDirectionAwareNavigationControlMutation = () => {
             return sendFloorMaterialDirectionAwareNavigationControlState(enable).then(fetchFloorMaterialDirectionAwareNavigationControlState);
         },
         onError: useOnCommandError(Capability.FloorMaterialDirectionAwareNavigationControl)
+    });
+};
+
+export const useCleanRouteQuery = () => {
+    return useQuery({
+        queryKey: [QueryKey.CleanRouteControl],
+        queryFn: fetchCleanRoute
+    });
+};
+
+export const useCleanRouteMutation = () => {
+    return useValetudoFetchingMutation({
+        queryKey: [QueryKey.CleanRouteControl],
+        mutationFn: (route: CleanRoute) => {
+            return sendCleanRoute({route: route}).then(fetchCleanRoute);
+        },
+        onError: useOnCommandError(Capability.CleanRouteControl)
+    });
+};
+
+export const useCleanRouteControlPropertiesQuery = () => {
+    return useQuery({
+        queryKey: [QueryKey.CleanRouteControlProperties],
+        queryFn: fetchCleanRouteControlProperties,
+
+        staleTime: Infinity
+    });
+};
+
+export const useMopDockMopDryingTimeQuery = () => {
+    return useQuery({
+        queryKey: [QueryKey.MopDockMopDryingTimeControl],
+        queryFn: fetchMopDockMopDryingTime
+    });
+};
+
+export const useMopDockMopDryingTimeMutation = () => {
+    return useValetudoFetchingMutation({
+        queryKey: [QueryKey.MopDockMopDryingTimeControl],
+        mutationFn: (duration: MopDockMopDryingDuration) => {
+            return sendMopDockMopDryingTime({duration: duration}).then(fetchMopDockMopDryingTime);
+        },
+        onError: useOnCommandError(Capability.MopDockMopDryingTimeControl)
+    });
+};
+
+export const useMopDockMopDryingTimeControlPropertiesQuery = () => {
+    return useQuery({
+        queryKey: [QueryKey.MopDockMopDryingTimeControlProperties],
+        queryFn: fetchMopDockMopDryingTimeControlProperties,
+
+        staleTime: Infinity
+    });
+};
+
+export const useAutoEmptyDockAutoEmptyDurationQuery = () => {
+    return useQuery({
+        queryKey: [QueryKey.AutoEmptyDockAutoEmptyDurationControl],
+        queryFn: fetchAutoEmptyDockAutoEmptyDuration
+    });
+};
+
+export const useAutoEmptyDockAutoEmptyDurationMutation = () => {
+    return useValetudoFetchingMutation({
+        queryKey: [QueryKey.AutoEmptyDockAutoEmptyDurationControl],
+        mutationFn: (duration: AutoEmptyDockAutoEmptyDuration) => {
+            return sendAutoEmptyDockAutoEmptyDuration({duration: duration}).then(fetchAutoEmptyDockAutoEmptyDuration);
+        },
+        onError: useOnCommandError(Capability.AutoEmptyDockAutoEmptyDurationControl)
+    });
+};
+
+export const useAutoEmptyDockAutoEmptyDurationControlPropertiesQuery = () => {
+    return useQuery({
+        queryKey: [QueryKey.AutoEmptyDockAutoEmptyDurationControlProperties],
+        queryFn: fetchAutoEmptyDockAutoEmptyDurationControlProperties,
+
+        staleTime: Infinity
+    });
+};
+
+export const useMapAnnotationsPropertiesQuery = () => {
+    return useQuery({
+        queryKey: [QueryKey.MapAnnotationsProperties],
+        queryFn: fetchMapAnnotationsProperties,
+
+        staleTime: Infinity
+    });
+};
+
+export const useMapAnnotationsMutation = (
+    options?: UseMutationOptions<RobotAttribute[], unknown, Array<ValetudoMapAnnotation>>
+) => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (mapAnnotations: Array<ValetudoMapAnnotation>) => {
+            return sendMapAnnotationsUpdate(mapAnnotations).then(fetchStateAttributes);
+        },
+        onError: useOnCommandError(Capability.MapAnnotations),
+        ...options,
+        onSuccess: async (data, ...args) => {
+            queryClient.setQueryData<RobotAttribute[]>([QueryKey.Attributes], data, {
+                updatedAt: Date.now(),
+            });
+            await queryClient.invalidateQueries({ queryKey: [QueryKey.Map] });
+            await options?.onSuccess?.(data, ...args);
+        },
     });
 };
 

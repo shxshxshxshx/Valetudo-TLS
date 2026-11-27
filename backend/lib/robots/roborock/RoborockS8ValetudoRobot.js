@@ -1,6 +1,7 @@
 const capabilities = require("./capabilities");
 const entities = require("../../entities");
 const fs = require("fs");
+const LinuxDuststreamingCapability = require("../common/linuxCapabilities/LinuxDuststreamingCapability");
 const Logger = require("../../Logger");
 const MiioValetudoRobot = require("../MiioValetudoRobot");
 const QuirksCapability = require("../../core/capabilities/QuirksCapability");
@@ -24,7 +25,6 @@ class RoborockS8ValetudoRobot extends RoborockGen4ValetudoRobot {
                 options,
                 {
                     waterGrades: WATER_GRADES,
-                    supportedAttachments: SUPPORTED_ATTACHMENTS,
                     dockType: RoborockConst.DOCK_TYPE.AUTO_EMPTY
                 }
             )
@@ -51,6 +51,16 @@ class RoborockS8ValetudoRobot extends RoborockGen4ValetudoRobot {
             liftModeId: 3
         }));
 
+        this.registerCapability(new LinuxDuststreamingCapability({
+            robot: this,
+            platform: LinuxDuststreamingCapability.PLATFORM.DREAME_MR813,
+            device: "/dev/video1",
+            dimensions: {
+                width: 640,
+                height: 480
+            }
+        }));
+
         [
             capabilities.RoborockAutoEmptyDockAutoEmptyIntervalControlCapability,
             capabilities.RoborockAutoEmptyDockManualTriggerCapability,
@@ -60,7 +70,9 @@ class RoborockS8ValetudoRobot extends RoborockGen4ValetudoRobot {
             capabilities.RoborockPetObstacleAvoidanceControlCapability,
             capabilities.RoborockCollisionAvoidantNavigationControlCapability,
             capabilities.RoborockMapSegmentMaterialControlCapability,
-            capabilities.RoborockFloorMaterialDirectionAwareNavigationControlCapability
+            capabilities.RoborockFloorMaterialDirectionAwareNavigationControlCapability,
+            capabilities.RoborockCleanRouteControlCapability,
+            capabilities.RoborockAutoEmptyDockAutoEmptyDurationControlCapability,
         ].forEach(capability => {
             this.registerCapability(new capability({robot: this}));
         });
@@ -71,9 +83,7 @@ class RoborockS8ValetudoRobot extends RoborockGen4ValetudoRobot {
         this.registerCapability(new QuirksCapability({
             robot: this,
             quirks: [
-                quirkFactory.getQuirk(RoborockQuirkFactory.KNOWN_QUIRKS.AUTO_EMPTY_DURATION),
                 quirkFactory.getQuirk(RoborockQuirkFactory.KNOWN_QUIRKS.BUTTON_LEDS),
-                quirkFactory.getQuirk(RoborockQuirkFactory.KNOWN_QUIRKS.MOP_PATTERN),
             ]
         }));
     }
@@ -101,6 +111,19 @@ class RoborockS8ValetudoRobot extends RoborockGen4ValetudoRobot {
         }
     }
 
+    getModelDetails() {
+        return Object.assign(
+            {},
+            super.getModelDetails(),
+            {
+                supportedAttachments: [
+                    entities.state.attributes.AttachmentStateAttribute.TYPE.WATERTANK,
+                    entities.state.attributes.AttachmentStateAttribute.TYPE.MOP,
+                ]
+            }
+        );
+    }
+
     static IMPLEMENTATION_AUTO_DETECTION_HANDLER() {
         const deviceConf = MiioValetudoRobot.READ_DEVICE_CONF(RoborockValetudoRobot.DEVICE_CONF_PATH);
 
@@ -114,11 +137,6 @@ const WATER_GRADES = {
     [entities.state.attributes.PresetSelectionStateAttribute.INTENSITY.MEDIUM]: 202,
     [entities.state.attributes.PresetSelectionStateAttribute.INTENSITY.HIGH]: 203
 };
-
-const SUPPORTED_ATTACHMENTS = [
-    entities.state.attributes.AttachmentStateAttribute.TYPE.WATERTANK,
-    entities.state.attributes.AttachmentStateAttribute.TYPE.MOP,
-];
 
 
 module.exports = RoborockS8ValetudoRobot;

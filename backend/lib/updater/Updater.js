@@ -10,10 +10,12 @@ class Updater {
     /**
      * @param {object} options
      * @param {import("../Configuration")} options.config
+     * @param {import("../PhoenixManager")} options.phoenixManager
      * @param {import("../core/ValetudoRobot")} options.robot
      */
     constructor(options) {
         this.config = options.config;
+        this.phoenixManager = options.phoenixManager;
         this.robot = options.robot;
 
         /** @type {import("../entities/core/updater/ValetudoUpdaterState")} */
@@ -65,9 +67,10 @@ class Updater {
      * and then asynchronously process it.
      * Updates are reported via the updaters state
      *
+     * @param {boolean} force
      * @return {void}
      */
-    triggerCheck() {
+    triggerCheck(force) {
         if (
             !(
                 this.state instanceof States.ValetudoUpdaterIdleState ||
@@ -86,7 +89,8 @@ class Updater {
             architectures: Updater.ARCHITECTURES,
             spaceRequired: Updater.SPACE_REQUIREMENTS,
             robot: this.robot,
-            updateProvider: this.updateProvider
+            updateProvider: this.updateProvider,
+            force: force
         });
 
         step.execute().then((state) => {
@@ -181,11 +185,14 @@ class Updater {
         this.state.busy = true;
 
         const step = new Steps.ValetudoUpdaterApplyStep({
+            phoenixManager: this.phoenixManager,
+
             downloadPath: this.state.downloadPath,
-            downloadPathFd: this.state.downloadPathFd
+            downloadPathFd: this.state.downloadPathFd,
+            newVersion: this.state.version
         });
 
-        step.execute().catch(err => { //no .then() required as the system will reboot
+        step.execute().catch(err => { //no .then() required as the system will reboot/the process will restart
             this.state = new States.ValetudoUpdaterErrorState({
                 type: err.type,
                 message: err.message

@@ -4,7 +4,7 @@ const fs = require("fs");
 const BEightParser = require("../../msmart/BEightParser");
 const capabilities = require("./capabilities");
 const dtos = require("../../msmart/dtos");
-const DummyCloudCertManager = require("../../utils/DummyCloudCertManager");
+const DummyCloudTLSManager = require("../../utils/DummyCloudTLSManager");
 const entities = require("../../entities");
 const Logger = require("../../Logger");
 const MideaMapHacksProvider = require("./MideaMapHacksProvider");
@@ -50,15 +50,16 @@ class MideaValetudoRobot extends ValetudoRobot {
             const caKey = forge.pki.privateKeyFromPem(fs.readFileSync(CA_KEY_PATH, "utf8"));
             const caCert = forge.pki.certificateFromPem(fs.readFileSync(CA_CERT_PATH, "utf8"));
 
-            this.dummyCloudCertManager = new DummyCloudCertManager({caKey: caKey, caCert: caCert});
+            this.dummyCloudTLSManager = new DummyCloudTLSManager({caKey: caKey, caCert: caCert});
         }
 
-        this.mapParser = new MideaMapParser({mapHacksProvider: new MideaMapHacksProvider({robot: this})});
+        this.mapHacksProvider = new MideaMapHacksProvider({robot: this});
+        this.mapParser = new MideaMapParser({mapHacksProvider: this.mapHacksProvider});
         this.mapUpdateDebounceTimeout = null;
         this.activeMapUpdateCount = 0;
 
         this.dummycloud = new MSmartDummycloud({
-            dummyCloudCertManager: this.dummyCloudCertManager,
+            dummyCloudTLSManager: this.dummyCloudTLSManager,
             bindIP: BIND_IP,
             timeout: 5000,
             dummyClientCert: DUMMY_CLIENT_CERT,
@@ -82,6 +83,7 @@ class MideaValetudoRobot extends ValetudoRobot {
                 switch (type) {
                     case "11": // Could be cleanup process in %
                     case "13": // Could be cleanup done
+                    case "17": // Seems to have something to do with cloud reconnects?
                         // ignored (for now?)
                         break;
                     default:
@@ -119,10 +121,7 @@ class MideaValetudoRobot extends ValetudoRobot {
             value: entities.state.attributes.DockStatusStateAttribute.VALUE.IDLE
         }));
 
-        this.state.upsertFirstMatchingAttribute(new entities.state.attributes.AttachmentStateAttribute({
-            type: entities.state.attributes.AttachmentStateAttribute.TYPE.MOP,
-            attached: false
-        }));
+
     }
 
     async shutdown() {
@@ -223,6 +222,53 @@ class MideaValetudoRobot extends ValetudoRobot {
         if (data.station_error_code !== undefined) {
             statusNeedsUpdate = true;
             this.ephemeralState.station_error_code = data.station_error_code;
+
+
+            const supportedDockComponents = this.getModelDetails().supportedDockComponents;
+
+            if (supportedDockComponents.includes(stateAttrs.DockComponentStateAttribute.TYPE.WATER_TANK_CLEAN)) {
+                let value = stateAttrs.DockComponentStateAttribute.VALUE.OK;
+
+                if (data.station_error_code === 106) {
+                    value = stateAttrs.DockComponentStateAttribute.VALUE.EMPTY;
+                } else if (data.station_error_code === 105) {
+                    value = stateAttrs.DockComponentStateAttribute.VALUE.MISSING;
+                }
+
+                this.state.upsertFirstMatchingAttribute(new stateAttrs.DockComponentStateAttribute({
+                    type: stateAttrs.DockComponentStateAttribute.TYPE.WATER_TANK_CLEAN,
+                    value: value
+                }));
+            }
+
+            if (supportedDockComponents.includes(stateAttrs.DockComponentStateAttribute.TYPE.WATER_TANK_DIRTY)) {
+                this.state.upsertFirstMatchingAttribute(new stateAttrs.DockComponentStateAttribute({
+                    type: stateAttrs.DockComponentStateAttribute.TYPE.WATER_TANK_DIRTY,
+                    value: data.station_error_code === 152 ?
+                        stateAttrs.DockComponentStateAttribute.VALUE.FULL :
+                        stateAttrs.DockComponentStateAttribute.VALUE.OK,
+                }));
+            }
+
+            if (supportedDockComponents.includes(stateAttrs.DockComponentStateAttribute.TYPE.DUSTBAG)) {
+                let value = stateAttrs.DockComponentStateAttribute.VALUE.OK;
+
+                if (
+                    data.station_error_code === 129 ||
+                    data.station_error_code === 128 ||
+                    data.station_error_code === 12 || // TODO: verify that these are actually station_error_codes. And on which robot
+                    data.station_error_code === 11
+                ) {
+                    value = stateAttrs.DockComponentStateAttribute.VALUE.MISSING;
+                } else if (data.station_error_code === 121 || data.station_error_code === 13) {
+                    value = stateAttrs.DockComponentStateAttribute.VALUE.FULL;
+                }
+
+                this.state.upsertFirstMatchingAttribute(new stateAttrs.DockComponentStateAttribute({
+                    type: stateAttrs.DockComponentStateAttribute.TYPE.DUSTBAG,
+                    value: value
+                }));
+            }
         }
 
 
@@ -312,7 +358,7 @@ class MideaValetudoRobot extends ValetudoRobot {
                     statusError = this.mapErrorCode(this.ephemeralState.error_type, this.ephemeralState.error_desc);
                 } else if (this.ephemeralState.station_error_code > 0) {
                     statusValue = stateAttrs.StatusStateAttribute.VALUE.ERROR;
-                    statusError = MideaValetudoRobot.MAP_DOCK_ERROR_CODE(this.ephemeralState.station_error_code);
+                    statusError = this.mapErrorCode(3, this.ephemeralState.station_error_code);
                 }
 
                 if (
@@ -935,7 +981,7 @@ class MideaValetudoRobot extends ValetudoRobot {
                     parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.PERMANENT;
                     parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.WARNING;
                     parameters.subsystem = ValetudoRobotError.SUBSYSTEM.DOCK;
-                    parameters.message = "Mop Dock Clean Water Tank empty";
+                    parameters.message = "Mop Dock Clean Water Tank empty or not installed";
                     break;
                 case 107: // STATION_CLOSE_ERROR
                     parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.PERMANENT;
@@ -1049,7 +1095,7 @@ class MideaValetudoRobot extends ValetudoRobot {
                     parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.PERMANENT;
                     parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.WARNING;
                     parameters.subsystem = ValetudoRobotError.SUBSYSTEM.DOCK;
-                    parameters.message = "Mop Dock Wastewater Tank not installed or full";
+                    parameters.message = "Mop Dock Wastewater Tank full or not installed";
                     break;
                 case 204: // STATION_COMMUNICATION_ERR
                     parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.TRANSIENT;
@@ -1065,18 +1111,6 @@ class MideaValetudoRobot extends ValetudoRobot {
 
     getManufacturer() {
         return "Midea";
-    }
-
-    getModelDetails() { // TODO: possibly belongs into the J15 implementation
-        return Object.assign(
-            {},
-            super.getModelDetails(),
-            {
-                supportedAttachments: [
-                    stateAttrs.AttachmentStateAttribute.TYPE.MOP,
-                ]
-            }
-        );
     }
 
     /**
@@ -1150,7 +1184,7 @@ MideaValetudoRobot.HIGH_RESOLUTION_WATER_GRADES = Object.freeze({
     [stateAttrs.PresetSelectionStateAttribute.INTENSITY.MIN]: 101,
     [stateAttrs.PresetSelectionStateAttribute.INTENSITY.LOW]: 108,
     [stateAttrs.PresetSelectionStateAttribute.INTENSITY.MEDIUM]: 115,
-    [stateAttrs.PresetSelectionStateAttribute.INTENSITY.HIGH]: 120, // J15pu default
+    [stateAttrs.PresetSelectionStateAttribute.INTENSITY.HIGH]: 122,
     [stateAttrs.PresetSelectionStateAttribute.INTENSITY.MAX]: 130,
 });
 
@@ -1264,40 +1298,5 @@ MideaValetudoRobot.DOCK_STATUS_MAP = Object.freeze({
     88: stateAttrs.DockStatusStateAttribute.VALUE.IDLE,      // "after_manualcontorl_relocate"
     89: stateAttrs.DockStatusStateAttribute.VALUE.IDLE,      // "outof_map_range_relocate"
 });
-
-/**
- *
- * @param {number} dockErrorCode
- *
- * @returns {ValetudoRobotError}
- */
-MideaValetudoRobot.MAP_DOCK_ERROR_CODE = (dockErrorCode) => {
-    const parameters = {
-        severity: {
-            kind: ValetudoRobotError.SEVERITY_KIND.UNKNOWN,
-            level: ValetudoRobotError.SEVERITY_LEVEL.UNKNOWN,
-        },
-        subsystem: ValetudoRobotError.SUBSYSTEM.UNKNOWN,
-        message: `Unknown Dock error ${dockErrorCode}`,
-        vendorErrorCode: typeof dockErrorCode === "number" ? dockErrorCode.toString() : `unknown (${dockErrorCode})`
-    };
-
-    switch (dockErrorCode) {
-        case 106:
-            parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.PERMANENT;
-            parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.WARNING;
-            parameters.subsystem = ValetudoRobotError.SUBSYSTEM.DOCK;
-            parameters.message = "Mop Dock Clean Water Tank empty or not installed";
-            break;
-        case 152:
-            parameters.severity.kind = ValetudoRobotError.SEVERITY_KIND.PERMANENT;
-            parameters.severity.level = ValetudoRobotError.SEVERITY_LEVEL.WARNING;
-            parameters.subsystem = ValetudoRobotError.SUBSYSTEM.DOCK;
-            parameters.message = "Mop Dock Wastewater Tank full or not installed";
-            break;
-    }
-
-    return new ValetudoRobotError(parameters);
-};
 
 module.exports = MideaValetudoRobot;

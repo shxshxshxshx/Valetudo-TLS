@@ -150,6 +150,26 @@ class MapLayer extends SerializableEntity {
 
         this.compressedPixels = compressedPixels;
     }
+
+    /**
+     * @param {Array<number>} compressedPixels
+     * @returns {Array<number>}
+     */
+    static DECOMPRESS_PIXELS(compressedPixels) {
+        const uncompressedPixels = [];
+        if (compressedPixels) {
+            for (let i = 0; i < compressedPixels.length; i += 3) {
+                const xStart = compressedPixels[i];
+                const y = compressedPixels[i+1];
+                const count = compressedPixels[i+2];
+
+                for (let j = 0; j < count; j++) {
+                    uncompressedPixels.push(xStart + j, y);
+                }
+            }
+        }
+        return uncompressedPixels;
+    }
 }
 
 MapLayer.COORDINATE_TUPLE_SORT = (a, b) => {
@@ -188,7 +208,10 @@ MapLayer.MATERIAL = Object.freeze({
     TILE: "tile",
     WOOD: "wood",
     WOOD_HORIZONTAL: "wood_horizontal",
-    WOOD_VERTICAL: "wood_vertical"
+    WOOD_VERTICAL: "wood_vertical",
+    CARPET: "carpet",
+    CARPET_LOW: "carpet_low",
+    CARPET_HIGH: "carpet_high"
 });
 
 module.exports = MapLayer;

@@ -22,13 +22,14 @@ const AttachmentStateAttribute = require("../backend/lib/entities/state/attribut
 const StatusStateAttribute = require("../backend/lib/entities/state/attributes/StatusStateAttribute");
 const DockStatusStateAttribute = require("../backend/lib/entities/state/attributes/DockStatusStateAttribute");
 const PresetSelectionStateAttribute = require("../backend/lib/entities/state/attributes/PresetSelectionStateAttribute");
+const DockComponentStateAttribute = require("../backend/lib/entities/state/attributes/DockComponentStateAttribute");
 const Unit = require("../backend/lib/mqtt/common/Unit");
 const HomieCommonAttributes = require("../backend/lib/mqtt/homie/HomieCommonAttributes");
 const ValetudoEventStore = require("valetudo-backend/lib/ValetudoEventStore");
 
 
-function jekyllAlert(type, content) {
-    return "{% include alert.html type=\"" + type + "\" content=\"" + content.replace(/"/g, "\\\"") + "\" %}\n\n";
+function renderAlert(type, content) {
+    return "{% alert \"" + type + "\" %}" + content + "{% endalert %}\n\n";
 }
 
 const markdownPreamble = `---
@@ -48,16 +49,14 @@ On this page you can also find the exact topic to which to send commands to or f
 See the specific integration pages for instructions on how to set up autodiscovery for your home automation software
 platform:
 
-- [Home Assistant](./home-assistant-integration)
-- [openHAB](./openhab-integration)
-- [Node-RED](./node-red)
+- [Home Assistant](/pages/integrations/home-assistant-integration)
 
 Other home automation software that follows the [Homie convention](https://homieiot.github.io/) should also be able to
 automatically discover your Valetudo instance.
 
 <div style="text-align: center;">
     <a href="https://homieiot.github.io" rel="noopener" target="_blank">
-        <img src="./img/works-with-homie.svg" />
+        <img src="../img/works-with-homie.svg" />
     </a>
     <br>
     <br>
@@ -106,9 +105,6 @@ class FakeHassController extends HassController {
     }
 
     async refresh(component, topics) {
-    }
-
-    async dropAutoconf(component) {
     }
 
     async refreshAutoconf(component, payload) {
@@ -246,6 +242,22 @@ class FakeMqttController extends MqttController {
             new DockStatusStateAttribute({
                 value: DockStatusStateAttribute.VALUE.IDLE,
             }),
+            new DockComponentStateAttribute({
+                type: DockComponentStateAttribute.TYPE.WATER_TANK_CLEAN,
+                value: DockComponentStateAttribute.VALUE.OK
+            }),
+            new DockComponentStateAttribute({
+                type: DockComponentStateAttribute.TYPE.WATER_TANK_DIRTY,
+                value: DockComponentStateAttribute.VALUE.OK
+            }),
+            new DockComponentStateAttribute({
+                type: DockComponentStateAttribute.TYPE.DETERGENT,
+                value: DockComponentStateAttribute.VALUE.OK
+            }),
+            new DockComponentStateAttribute({
+                type: DockComponentStateAttribute.TYPE.DUSTBAG,
+                value: DockComponentStateAttribute.VALUE.OK
+            }),
             new PresetSelectionStateAttribute({
                 type: PresetSelectionStateAttribute.TYPE.FAN_SPEED,
                 value: PresetSelectionStateAttribute.INTENSITY.MAX
@@ -340,7 +352,7 @@ class FakeMqttController extends MqttController {
         const escapedBaseTitle = baseTitle.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         const finalDisplayTitle = escapedBaseTitle + titleSuffix;
 
-        markdown += `${"#".repeat(markdownLevel)} ${finalDisplayTitle} <a id="${anchor}" />` + "\n\n";
+        markdown += `${"#".repeat(markdownLevel)} ${finalDisplayTitle}` + "\n\n";
 
         let homieType = "Handle";
         const attributes = [];
@@ -366,7 +378,7 @@ class FakeMqttController extends MqttController {
             attributes.push("Device");
         }
         if (handle instanceof CapabilityMqttHandle) {
-            attributes.push(`capability: [${handle.capability.getType()}](/pages/usage/capabilities-overview.html#${this.generateAnchor(handle.capability.getType())})`);
+            attributes.push(`capability: [${handle.capability.getType()}](/pages/usage/capabilities-overview/#${this.generateAnchor(handle.capability.getType())})`);
         }
         markdown += `*${attributes.join(", ")}*` + "\n\n";
 
@@ -450,14 +462,12 @@ class FakeMqttController extends MqttController {
             let alert = "Some information contained in this document " +
                 "may not be exactly what is sent or expected by actual robots, since different vendors have different" +
                 " implementations. Refer to the table below.\n\n";
-            alert += "|------+--------|\n";
             alert += "| What | Reason |\n";
             alert += "|------|--------|\n";
             for (const [what, reason] of Object.entries(handle.helpMayChange)) {
                 alert += `| ${what} | ${reason} |` + "\n";
             }
-            alert += "|------+--------|\n\n";
-            markdown += jekyllAlert("warning", alert);
+            markdown += renderAlert("warning", alert);
         }
 
         if (handle.gettable) {
@@ -565,7 +575,7 @@ class FakeMqttController extends MqttController {
             let hassComponentAnchors;
             let stateAttrAnchors;
 
-            const robotRes = await this.generateHandleDoc(this.robotHandle, 2, false);
+            const robotRes = await this.generateHandleDoc(this.robotHandle, 3, false);
             markdown += robotRes.markdown;
             anchors = robotRes.anchors;
             hassComponentAnchors = robotRes.hassComponentAnchors;
@@ -685,19 +695,8 @@ class FakeMqttController extends MqttController {
                 "friendlyName": "Valetudo Robot",
                 "identifier": "<IDENTIFIER>"
             },
-            "interfaces": {
-                "homie": {
-                    "enabled": true,
-                    "cleanAttributesOnShutdown": false
-                },
-                "homeassistant": {
-                    "enabled": true,
-                    "cleanAutoconfOnShutdown": false
-                }
-            },
             "customizations": {
-                "topicPrefix": "<TOPIC PREFIX>",
-                "provideMapData": true
+                "topicPrefix": "<TOPIC PREFIX>"
             },
             "stateTopic": "<TOPIC PREFIX>/<IDENTIFIER>/$state"
         }
@@ -717,9 +716,6 @@ class FakeMqttController extends MqttController {
     }
 
     async shutdown() {
-    }
-
-    async dropHomieAttributes(handle) {
     }
 
     stopAutorefreshService() {
@@ -762,7 +758,7 @@ process.on("uncaughtException", function (err) {
 async function genDocs() {
     const fakeController = new FakeMqttController();
     const markdown = await fakeController.generateDocs();
-    fs.writeFileSync(path.join(__dirname, "../docs/_pages/integrations/mqtt.md"), markdown);
+    fs.writeFileSync(path.join(__dirname, "../docs/pages/integrations/mqtt.md"), markdown);
 }
 
 genDocs().then(() => {

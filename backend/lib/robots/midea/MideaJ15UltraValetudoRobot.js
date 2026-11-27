@@ -1,5 +1,6 @@
 const capabilities = require("./capabilities");
 const fs = require("node:fs");
+const LinuxDuststreamingCapability = require("../common/linuxCapabilities/LinuxDuststreamingCapability");
 const Logger = require("../../Logger");
 const MideaModernValetudoRobot = require("./MideaModernValetudoRobot");
 const MideaQuirkFactory = require("./MideaQuirkFactory");
@@ -36,6 +37,9 @@ class MideaJ15UltraValetudoRobot extends MideaModernValetudoRobot {
             capabilities.MideaCollisionAvoidantNavigationControlCapability,
             capabilities.MideaCarpetModeControlCapabilityV3,
             capabilities.MideaMapSegmentMaterialControlCapability,
+            capabilities.MideaCleanRouteControlCapability,
+            capabilities.MideaMopDockMopDryingTimeControlCapability,
+            capabilities.MideaAutoEmptyDockAutoEmptyDurationControlCapabilityV2
         ].forEach(capability => {
             this.registerCapability(new capability({robot: this}));
         });
@@ -47,6 +51,21 @@ class MideaJ15UltraValetudoRobot extends MideaModernValetudoRobot {
                 width: 640,
                 height: 480
             }
+        }));
+
+        this.registerCapability(new LinuxDuststreamingCapability({
+            robot: this,
+            platform: LinuxDuststreamingCapability.PLATFORM.MIDEA_RK3566,
+            device: "/dev/video5",
+            dimensions: {
+                width: 640,
+                height: 480
+            }
+        }));
+
+        this.registerCapability(new capabilities.MideaMapSegmentRenameCapabilityV2({
+            robot: this,
+            mapHacksProvider: this.mapHacksProvider
         }));
 
         this.registerCapability(new QuirksCapability({
@@ -61,12 +80,9 @@ class MideaJ15UltraValetudoRobot extends MideaModernValetudoRobot {
                 quirkFactory.getQuirk(MideaQuirkFactory.KNOWN_QUIRKS.DEEP_CARPET_CLEANING),
                 quirkFactory.getQuirk(MideaQuirkFactory.KNOWN_QUIRKS.INCREASED_CARPET_AVOIDANCE),
                 quirkFactory.getQuirk(MideaQuirkFactory.KNOWN_QUIRKS.STAIN_CLEANING),
-                quirkFactory.getQuirk(MideaQuirkFactory.KNOWN_QUIRKS.AUTO_EMPTY_DURATION),
                 quirkFactory.getQuirk(MideaQuirkFactory.KNOWN_QUIRKS.MOP_DOCK_MOP_CLEANING_FREQUENCY),
                 quirkFactory.getQuirk(MideaQuirkFactory.KNOWN_QUIRKS.MOP_DOCK_WATER_USAGE),
-                quirkFactory.getQuirk(MideaQuirkFactory.KNOWN_QUIRKS.MOP_DRYING_TIME),
                 quirkFactory.getQuirk(MideaQuirkFactory.KNOWN_QUIRKS.MOP_DOCK_SELF_CLEANING_FREQUENCY),
-                quirkFactory.getQuirk(MideaQuirkFactory.KNOWN_QUIRKS.CLEAN_ROUTE),
                 quirkFactory.getQuirk(MideaQuirkFactory.KNOWN_QUIRKS.THRESHOLD_RECOGNITION),
                 quirkFactory.getQuirk(MideaQuirkFactory.KNOWN_QUIRKS.BRIDGE_BOOST),
             ]

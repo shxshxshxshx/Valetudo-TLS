@@ -12,11 +12,7 @@ img_delete_button.src = deleteButtonIconSVG;
 const img_scale_button = new Image();
 img_scale_button.src = scaleButtonIconSVG;
 
-const buttonHitboxPadding = 22.5;
-
 abstract class RestrictedZoneClientStructure extends ClientStructure {
-    public static TYPE = "RestrictedZoneClientStructure";
-
     protected activeStyle : { stroke: string, fill: string } = {
         stroke: "rgb(0, 255, 0)",
         fill: "rgba(0, 255, 0, 0)"
@@ -109,31 +105,13 @@ abstract class RestrictedZoneClientStructure extends ClientStructure {
 
 
         if (this.active) {
-            const scaledDeleteButtonSize = {
-                width: Math.min(
-                    considerHiDPI(img_delete_button.width) * (scaleFactor / considerHiDPI(5.5)),
-                    considerHiDPI(70)
-                ),
-                height: Math.min(
-                    considerHiDPI(img_delete_button.height) * (scaleFactor / considerHiDPI(5.5)),
-                    considerHiDPI(70)
-                )
-            };
-            const scaledScaleButtonSize = {
-                width: Math.min(
-                    considerHiDPI(img_scale_button.width) * (scaleFactor / considerHiDPI(5.5)),
-                    considerHiDPI(70)
-                ),
-                height: Math.min(
-                    considerHiDPI(img_scale_button.height) * (scaleFactor / considerHiDPI(5.5)),
-                    considerHiDPI(70)
-                )
-            };
+            const scaledDeleteButtonSize = this.getControlElementImageScaledSize(img_delete_button, scaleFactor);
+            const scaledScaleButtonSize = this.getControlElementImageScaledSize(img_scale_button, scaleFactor);
 
             ctx.drawImage(
                 this.getOptimizedImage(img_delete_button, scaledDeleteButtonSize.width, scaledDeleteButtonSize.height),
-                p1.x - scaledDeleteButtonSize.width / 2,
-                p1.y - scaledDeleteButtonSize.height / 2,
+                p0.x - scaledDeleteButtonSize.width / 2,
+                p0.y - scaledDeleteButtonSize.height / 2,
                 scaledDeleteButtonSize.width,
                 scaledDeleteButtonSize.height
             );
@@ -149,6 +127,8 @@ abstract class RestrictedZoneClientStructure extends ClientStructure {
     }
 
     postProcess(): void {
+        this.isResizing = false;
+
         this.x0 = Math.round(this.x0);
         this.y0 = Math.round(this.y0);
 
@@ -162,12 +142,13 @@ abstract class RestrictedZoneClientStructure extends ClientStructure {
         this.y3 = Math.round(this.y3);
     }
 
-    tap(tappedPoint : PointCoordinates, transformationMatrixToScreenSpace: DOMMatrixInit) : StructureInterceptionHandlerResult {
+    tap(tappedPoint : PointCoordinates, transformationMatrixToScreenSpace: DOMMatrixInit, scaleFactor: number) : StructureInterceptionHandlerResult {
         const p0 = new DOMPoint(this.x0, this.y0).matrixTransform(transformationMatrixToScreenSpace);
-        const p1 = new DOMPoint(this.x1, this.y1).matrixTransform(transformationMatrixToScreenSpace);
         const p2 = new DOMPoint(this.x2, this.y2).matrixTransform(transformationMatrixToScreenSpace);
 
-        const deleteButtonHitbox = calculateBoxAroundPoint(p1, buttonHitboxPadding);
+        const scaledDeleteButtonSize = this.getControlElementImageScaledSize(img_delete_button, scaleFactor);
+        const deleteButtonHitboxPadding = Math.max(scaledDeleteButtonSize.width, scaledDeleteButtonSize.height) / 2;
+        const deleteButtonHitbox = calculateBoxAroundPoint(p0, deleteButtonHitboxPadding);
 
         if (this.active && isInsideBox(tappedPoint, deleteButtonHitbox)) {
             return {
@@ -194,14 +175,23 @@ abstract class RestrictedZoneClientStructure extends ClientStructure {
         }
     }
 
-    translate(startCoordinates: PointCoordinates, lastCoordinates: PointCoordinates, currentCoordinates: PointCoordinates, transformationMatrixToScreenSpace : DOMMatrixInit, pixelSize: number) : StructureInterceptionHandlerResult {
+    translate(
+        startCoordinates: PointCoordinates,
+        lastCoordinates: PointCoordinates,
+        currentCoordinates: PointCoordinates,
+        transformationMatrixToScreenSpace : DOMMatrixInit,
+        scaleFactor: number,
+        pixelSize: number
+    ) : StructureInterceptionHandlerResult {
         if (this.active) {
             const p0 = new DOMPoint(this.x0, this.y0).matrixTransform(transformationMatrixToScreenSpace);
             const p2 = new DOMPoint(this.x2, this.y2).matrixTransform(transformationMatrixToScreenSpace);
 
-            const resizeButtonHitbox = calculateBoxAroundPoint(p2, buttonHitboxPadding);
+            const scaledScaleButtonSize = this.getControlElementImageScaledSize(img_scale_button, scaleFactor);
+            const scaleButtonHitboxPadding = Math.max(scaledScaleButtonSize.width, scaledScaleButtonSize.height) / 2;
+            const scaleButtonHitbox = calculateBoxAroundPoint(p2, scaleButtonHitboxPadding);
 
-            if (!this.isResizing && isInsideBox(lastCoordinates, resizeButtonHitbox)) {
+            if (!this.isResizing && isInsideBox(lastCoordinates, scaleButtonHitbox)) {
                 this.isResizing = true;
             }
 
@@ -246,10 +236,6 @@ abstract class RestrictedZoneClientStructure extends ClientStructure {
         return {
             stopPropagation: false
         };
-    }
-
-    getType(): string {
-        return RestrictedZoneClientStructure.TYPE;
     }
 }
 

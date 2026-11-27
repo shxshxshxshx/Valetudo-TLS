@@ -20,6 +20,10 @@ class ViomiV6ValetudoRobot extends ViomiValetudoRobot {
             robot: this
         }));
 
+        this.registerCapability(new capabilities.ViomiCleanRouteControlCapability({
+            robot: this
+        }));
+
         const quirkFactory = new ViomiQuirkFactory({
             robot: this
         });
@@ -27,7 +31,6 @@ class ViomiV6ValetudoRobot extends ViomiValetudoRobot {
             robot: this,
             quirks: [
                 quirkFactory.getQuirk(ViomiQuirkFactory.KNOWN_QUIRKS.BUTTON_LEDS),
-                quirkFactory.getQuirk(ViomiQuirkFactory.KNOWN_QUIRKS.MOP_PATTERN),
                 quirkFactory.getQuirk(ViomiQuirkFactory.KNOWN_QUIRKS.OUTLINE_MODE),
             ]
         }));

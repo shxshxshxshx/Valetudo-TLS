@@ -7,7 +7,7 @@ import gfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import style from "./About.module.css";
 import {AboutText} from "./res/AboutText";
-import {ReactComponent as Logo} from "../assets/icons/valetudo_logo_with_name.svg";
+import Logo from "../assets/icons/valetudo_logo_with_name.svg?react";
 import DetailPageHeaderRow from "../components/DetailPageHeaderRow";
 
 const About = (): React.ReactElement => {
@@ -37,13 +37,14 @@ const About = (): React.ReactElement => {
                         />
                     </Grid2>
 
-                    <ReactMarkdown
-                        remarkPlugins={[gfm]}
-                        rehypePlugins={[rehypeRaw]}
-                        className={style.reactMarkDown}
-                    >
-                        {AboutText}
-                    </ReactMarkdown>
+                    <div className={style.reactMarkDown}>
+                        <ReactMarkdown
+                            remarkPlugins={[gfm]}
+                            rehypePlugins={[rehypeRaw]}
+                        >
+                            {AboutText}
+                        </ReactMarkdown>
+                    </div>
                 </Box>
             </Grid2>
         </PaperContainer>

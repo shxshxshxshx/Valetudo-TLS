@@ -1,12 +1,14 @@
-import {AttachmentStateAttributeType} from "./RawRobotState";
+import {AttachmentStateAttributeType, DockComponentStateAttributeType} from "./RawRobotState";
 
 export enum Capability {
     AutoEmptyDockAutoEmptyIntervalControl = "AutoEmptyDockAutoEmptyIntervalControlCapability",
+    AutoEmptyDockAutoEmptyDurationControl = "AutoEmptyDockAutoEmptyDurationControlCapability",
     AutoEmptyDockManualTrigger = "AutoEmptyDockManualTriggerCapability",
     BasicControl = "BasicControlCapability",
     CarpetModeControl = "CarpetModeControlCapability",
     CarpetSensorModeControl = "CarpetSensorModeControlCapability",
     CameraLightControl = "CameraLightControlCapability",
+    CleanRouteControl = "CleanRouteControlCapability",
     CollisionAvoidantNavigation = "CollisionAvoidantNavigationControlCapability",
     CombinedVirtualRestrictions = "CombinedVirtualRestrictionsCapability",
     ConsumableMonitoring = "ConsumableMonitoringCapability",
@@ -27,6 +29,7 @@ export enum Capability {
     MapSnapshot = "MapSnapshotCapability",
     MappingPass = "MappingPassCapability",
     MopDockMopWashTemperatureControl = "MopDockMopWashTemperatureControlCapability",
+    MopDockMopDryingTimeControl = "MopDockMopDryingTimeControlCapability",
     ObstacleAvoidanceControl = "ObstacleAvoidanceControlCapability",
     PetObstacleAvoidanceControl = "PetObstacleAvoidanceControlCapability",
     MopExtensionControl = "MopExtensionControlCapability",
@@ -46,7 +49,9 @@ export enum Capability {
     WifiScan = "WifiScanCapability",
     ZoneCleaning = "ZoneCleaningCapability",
     Quirks = "QuirksCapability",
-    ObstacleImages = "ObstacleImagesCapability"
+    ObstacleImages = "ObstacleImagesCapability",
+    MapAnnotations = "MapAnnotationsCapability",
+    Duststreaming = "DuststreamingCapability",
 }
 
 export type Point = {
@@ -97,6 +102,7 @@ export interface RobotInformation {
     modelName: string;
     modelDetails: {
         supportedAttachments: Array<AttachmentStateAttributeType>;
+        supportedDockComponents: Array<DockComponentStateAttributeType>;
     }
     implementation: string;
 }
@@ -149,7 +155,11 @@ export interface SystemRuntimeInfo {
     gid: number;
     pid: number;
     versions: Record<string, string>;
-    env: Record<string, string>
+    env: Record<string, string>;
+    phoenix: {
+        canReincarnate: boolean;
+        generation: number;
+    }
 }
 
 export enum MapSegmentMaterial {
@@ -157,7 +167,10 @@ export enum MapSegmentMaterial {
     Tile = "tile",
     Wood = "wood",
     WoodHorizontal = "wood_horizontal",
-    WoodVertical = "wood_vertical"
+    WoodVertical = "wood_vertical",
+    Carpet = "carpet",
+    CarpetLow = "carpet_low",
+    CarpetHigh = "carpet_high"
 }
 
 
@@ -287,17 +300,6 @@ export interface MQTTConfiguration {
     };
     customizations: {
         topicPrefix: string;
-        provideMapData: boolean;
-    };
-    interfaces: {
-        homie: {
-            enabled: boolean;
-            cleanAttributesOnShutdown: boolean;
-        };
-        homeassistant: {
-            enabled: boolean;
-            cleanAutoconfOnShutdown: boolean;
-        };
     };
     optionalExposedCapabilities: Array<string>;
 }
@@ -372,6 +374,10 @@ export interface NTPClientConfiguration {
     timeout: number;
 }
 
+export interface DuststreamingConfiguration {
+    enabled: boolean;
+}
+
 export interface ValetudoEvent {
     __class: string;
     id: string;
@@ -380,6 +386,11 @@ export interface ValetudoEvent {
     type?: string;
     subType?: string;
     message?: string;
+    reason?: string;
+    description?: string;
+    previousVersion?: string;
+    newVersion?: string;
+    generation?: number;
 }
 
 export interface ValetudoEventInteraction {
@@ -618,6 +629,12 @@ export interface ObstacleImagesProperties {
     }
 }
 
+export interface DuststreamingProperties {
+    width: number,
+    height: number,
+    duststreamerInstalled: boolean
+}
+
 export type MopDockMopWashTemperature = "cold" | "warm" | "hot" | "scalding" | "boiling";
 
 export interface MopDockMopWashTemperaturePayload {
@@ -626,6 +643,55 @@ export interface MopDockMopWashTemperaturePayload {
 
 export interface MopDockMopWashTemperatureProperties {
     supportedTemperatures: Array<MopDockMopWashTemperature>;
+}
+
+export enum ValetudoMapAnnotationType {
+    Threshold = "threshold",
+    Curtain = "curtain",
+
+    Ramp = "ramp",
+}
+
+export interface ValetudoMapAnnotation {
+    type: ValetudoMapAnnotationType,
+    points: Array<Point>
+}
+
+export interface MapAnnotationsProperties {
+    supportedAnnotationTypes: Array<ValetudoMapAnnotationType>
+}
+
+
+export type CleanRoute = "quick" | "normal" | "intensive" | "deep";
+
+export interface CleanRoutePayload {
+    route: CleanRoute
+}
+
+export interface CleanRouteControlProperties {
+    supportedRoutes: Array<CleanRoute>,
+    mopOnly: Array<CleanRoute>,
+    oneTime: Array<CleanRoute>,
+}
+
+export type MopDockMopDryingDuration = "2h" | "3h" | "4h" | "5h" | "quiet" | "cold";
+
+export interface MopDockMopDryingTimePayload {
+    duration: MopDockMopDryingDuration
+}
+
+export interface MopDockMopDryingTimeControlProperties {
+    supportedDurations: Array<MopDockMopDryingDuration>,
+}
+
+export type AutoEmptyDockAutoEmptyDuration = "auto" | "short" | "medium" | "long";
+
+export interface AutoEmptyDockAutoEmptyDurationPayload {
+    duration: AutoEmptyDockAutoEmptyDuration
+}
+
+export interface AutoEmptyDockAutoEmptyDurationControlProperties {
+    supportedDurations: Array<AutoEmptyDockAutoEmptyDuration>,
 }
 
 export interface UserProfile {

@@ -15,7 +15,8 @@ build/
 
 /backend/lib/res/valetudo.openapi.schema.json
 /backend/lib/res/build_metadata.json
+/backend/lib/res/express-openid-connect.cjs
+/backend/lib/res/express-openid-connect.cjs.LICENSE.txt
 /backend/lib/robots/midea/generated/midea_protobufs.js
 
-/docs/vendor
-/docs/_site
+/docs/dist
