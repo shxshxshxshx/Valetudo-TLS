@@ -144,7 +144,7 @@ class ValetudoRouter {
         });
 
         this.router.get("/config/interfaces/http/auth/basic", (req, res) => {
-            res.json({...this.config.get("webserver").basicAuth, password: ""});
+            res.json({...this.config.get("webserver").auth.basicAuth, password: ""});
         });
 
         this.router.put("/config/interfaces/http/auth/basic", this.validator, (req, res) => {
@@ -162,10 +162,10 @@ class ValetudoRouter {
                 };
 
 
-                if (!options.password && (webserverConfig.basicAuth.enabled === false && options.enabled === true)) {
+                if (!options.password && (webserverConfig.auth.basicAuth.enabled === false && options.enabled === true)) {
                     res.sendStatus(400);
                 } else {
-                    webserverConfig.basicAuth = options;
+                    webserverConfig.auth.basicAuth = options;
 
                     this.config.set("webserver", webserverConfig);
                     res.sendStatus(200);

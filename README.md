@@ -13,7 +13,7 @@
 The Fork's Updater tracks this repository.
 
 ### Robot Support
-This tracks upstream, but does not TEST support for robots other than `Dream L10s Ultra` and `Roborock Q7 Max`.  
+This tracks upstream, but does not TEST support for robots other than `Dream L10s Ultra` and `Roborock Q7 Max`.
 
 ### Issues
 DO NOT REPORT ISSUES UPSTREAM.

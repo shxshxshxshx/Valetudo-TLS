@@ -23,13 +23,13 @@ const fs = require("fs");
 const MQTTRouter = require("./MQTTRouter");
 const NetworkAdvertisementManagerRouter = require("./NetworkAdvertisementManagerRouter");
 const NTPClientRouter = require("./NTPClientRouter");
+const OidcAuth = require("express-openid-connect");
 const SSDPRouter = require("./SSDPRouter");
 const SystemRouter = require("./SystemRouter");
 const TimerRouter = require("./TimerRouter");
 const Tools = require("../utils/Tools");
 const UpdaterRouter = require("./UpdaterRouter");
 const ValetudoEventRouter = require("./ValetudoEventRouter");
-const OidcAuth = require("express-openid-connect");
 const {isAdmin, isUser} = require("./middlewares/auth/OidcMiddleware");
 
 class WebServer {
@@ -88,22 +88,27 @@ class WebServer {
         );
 
         const authMiddleware = this.createAuthMiddleware();
-        const oidcMiddleware = OidcAuth.auth({
+        const createOidcMiddleware = () => OidcAuth.auth({
             issuerBaseURL: this.webserverConfig.auth.sso.oidc.issuer,
             baseURL: this.webserverConfig.baseUrl,
             clientID: this.webserverConfig.auth.sso.oidc.clientId,
             secret: this.webserverConfig.auth.sso.oidc.clientSecret,
             idTokenSigningAlg: this.webserverConfig.auth.sso.oidc.tokenSigningAlgorithm ?? "RS256",
+            authorizationParams: {
+                scope: this.webserverConfig.auth.sso.oidc.scope || "openid profile email"
+            },
             idpLogout: true
         });
+        let oidcMiddleware;
         const dynamicAuth = dynamicMiddleware.create([]);
         this.app.use(dynamicAuth.handle());
 
-        if (this.webserverConfig.auth.basicAuth.enabled === true && !this.oidcInUse) {
+        if (this.webserverConfig.auth.basicAuth.enabled === true && !this.webserverConfig.auth.sso.oidc.enabled) {
             dynamicAuth.use(authMiddleware);
             this.basicAuthInUse = true;
         }
         if (this.webserverConfig.auth.sso.oidc.enabled === true) {
+            oidcMiddleware = createOidcMiddleware();
             dynamicAuth.use(oidcMiddleware);
             this.oidcInUse = true;
         }
@@ -123,11 +128,12 @@ class WebServer {
                     dynamicAuth.unuse(oidcMiddleware);
                     this.oidcInUse = false;
                 } else if (!this.oidcInUse && this.webserverConfig.auth.sso.oidc.enabled) {
+                    oidcMiddleware = createOidcMiddleware();
                     dynamicAuth.use(oidcMiddleware);
                     this.oidcInUse = true;
                 }
 
-                if (this.basicAuthInUse && !this.webserverConfig.auth.basicAuth.enabled) {
+                if (this.basicAuthInUse && (!this.webserverConfig.auth.basicAuth.enabled || this.oidcInUse)) {
                     dynamicAuth.unuse(authMiddleware);
                     this.basicAuthInUse = false;
                 } else if (!this.basicAuthInUse && (this.webserverConfig.auth.basicAuth.enabled && !this.webserverConfig.auth.sso.oidc.enabled)) {
@@ -237,7 +243,7 @@ class WebServer {
     createAuthMiddleware() {
         const basicAuthMiddleware = basicAuth({
             authorizer: (username, password) => {
-                const basicAuthConf = this.config.get("webserver").basicAuth;
+                const basicAuthConf = this.config.get("webserver").auth.basicAuth;
 
                 const userMatches = basicAuth.safeCompare(username, basicAuthConf.username);
                 const passwordMatches = basicAuth.safeCompare(password, basicAuthConf.password);

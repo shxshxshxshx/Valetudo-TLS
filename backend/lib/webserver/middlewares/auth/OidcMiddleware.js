@@ -34,6 +34,7 @@ const isUser = function isUser(req, res, next, config) {
  * @return {string[]}
  */
 const mapRoles = function mapRoles(groups, config) {
+    groups = Array.isArray(groups) ? groups : [];
     let webserverConfig = config.get("webserver");
     let roles = [];
     if (webserverConfig.auth.sso.oidc.groupMap === undefined) {
