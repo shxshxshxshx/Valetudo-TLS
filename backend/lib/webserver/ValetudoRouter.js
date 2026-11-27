@@ -6,6 +6,7 @@ const RateLimit = require("express-rate-limit");
 const capabilities = require("../core/capabilities");
 const Logger = require("../Logger");
 const Tools = require("../utils/Tools");
+const {isAdmin} = require("./middlewares/auth/OidcMiddleware");
 const {SSEHub, SSEMiddleware} = require("./middlewares/sse");
 
 class ValetudoRouter {
@@ -144,7 +145,7 @@ class ValetudoRouter {
         });
 
         this.router.get("/config/interfaces/http/auth/basic", (req, res) => {
-            res.json({...this.config.get("webserver").auth.basicAuth, password: ""});
+            res.json({...this.config.get("webserver").basicAuth, password: ""});
         });
 
         this.router.put("/config/interfaces/http/auth/basic", this.validator, (req, res) => {
@@ -162,10 +163,10 @@ class ValetudoRouter {
                 };
 
 
-                if (!options.password && (webserverConfig.auth.basicAuth.enabled === false && options.enabled === true)) {
+                if (!options.password && (webserverConfig.basicAuth.enabled === false && options.enabled === true)) {
                     res.sendStatus(400);
                 } else {
-                    webserverConfig.auth.basicAuth = options;
+                    webserverConfig.basicAuth = options;
 
                     this.config.set("webserver", webserverConfig);
                     res.sendStatus(200);
@@ -197,7 +198,8 @@ class ValetudoRouter {
             res.json(this.config.get("duststreaming"));
         });
 
-        this.router.put("/config/duststreaming", this.validator, async (req, res) => {
+        // Intentional fork divergence: changing camera settings, including deleting duststreamer, requires admin.
+        this.router.put("/config/duststreaming", (req, res, next) => isAdmin(req, res, next, this.config), this.validator, async (req, res) => {
             if (typeof req.body.enabled === "boolean") {
                 this.config.set(
                     "duststreaming",

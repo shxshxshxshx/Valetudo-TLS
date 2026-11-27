@@ -23,7 +23,11 @@ const fs = require("fs");
 const MQTTRouter = require("./MQTTRouter");
 const NetworkAdvertisementManagerRouter = require("./NetworkAdvertisementManagerRouter");
 const NTPClientRouter = require("./NTPClientRouter");
-const OidcAuth = require("express-openid-connect");
+// pkg's snapshot loader cannot resolve the SDK's ESM dependencies. Bundle them for packaged builds.
+/** @type {typeof import("express-openid-connect")} */
+const OidcAuth = Object.hasOwn(process, "pkg") ?
+    require("../res/express-openid-connect.cjs") :
+    require("express-openid-connect");
 const SSDPRouter = require("./SSDPRouter");
 const SystemRouter = require("./SystemRouter");
 const TimerRouter = require("./TimerRouter");
@@ -58,6 +62,10 @@ class WebServer {
 
         this.webserverConfig = this.config.get("webserver");
 
+        if (this.webserverConfig.auth?.sso?.oidc?.enabled !== true) {
+            throw new Error("OIDC authentication must be enabled in this fork");
+        }
+
         this.port = this.webserverConfig.port;
 
         this.basicAuthInUse = false; //TODO: redo auth
@@ -81,34 +89,33 @@ class WebServer {
 
         this.app.use(Middlewares.EggTermMiddleware);
 
-        // Intentionally bypasses auth
-        this.app.use(
-            "/_killswitch",
-            new KillswitchRouter({robot: this.robot}).getRouter()
-        );
-
         const authMiddleware = this.createAuthMiddleware();
-        const createOidcMiddleware = () => OidcAuth.auth({
+        const oidcMiddleware = OidcAuth.auth({
             issuerBaseURL: this.webserverConfig.auth.sso.oidc.issuer,
             baseURL: this.webserverConfig.baseUrl,
             clientID: this.webserverConfig.auth.sso.oidc.clientId,
             secret: this.webserverConfig.auth.sso.oidc.clientSecret,
             idTokenSigningAlg: this.webserverConfig.auth.sso.oidc.tokenSigningAlgorithm ?? "RS256",
-            authorizationParams: {
-                scope: this.webserverConfig.auth.sso.oidc.scope || "openid profile email"
-            },
             idpLogout: true
         });
-        let oidcMiddleware;
         const dynamicAuth = dynamicMiddleware.create([]);
         this.app.use(dynamicAuth.handle());
 
-        if (this.webserverConfig.auth.basicAuth.enabled === true && !this.webserverConfig.auth.sso.oidc.enabled) {
+        this.app.use("/_killswitch", (req, res, next) => {
+            // This deletes the streaming executable. Anonymous access must stay disabled even if UI auth is off.
+            if (!this.basicAuthInUse && !this.oidcInUse) {
+                return res.status(401).json({error: "AuthenticationRequired"});
+            }
+
+            // Intentional divergence from upstream: this fork assigns the killswitch to the admin role.
+            return isAdmin(req, res, next, this.config);
+        }, new KillswitchRouter({robot: this.robot, config: this.config}).getRouter());
+
+        if (this.webserverConfig.auth.basicAuth.enabled === true && !this.oidcInUse) {
             dynamicAuth.use(authMiddleware);
             this.basicAuthInUse = true;
         }
         if (this.webserverConfig.auth.sso.oidc.enabled === true) {
-            oidcMiddleware = createOidcMiddleware();
             dynamicAuth.use(oidcMiddleware);
             this.oidcInUse = true;
         }
@@ -128,12 +135,11 @@ class WebServer {
                     dynamicAuth.unuse(oidcMiddleware);
                     this.oidcInUse = false;
                 } else if (!this.oidcInUse && this.webserverConfig.auth.sso.oidc.enabled) {
-                    oidcMiddleware = createOidcMiddleware();
                     dynamicAuth.use(oidcMiddleware);
                     this.oidcInUse = true;
                 }
 
-                if (this.basicAuthInUse && (!this.webserverConfig.auth.basicAuth.enabled || this.oidcInUse)) {
+                if (this.basicAuthInUse && !this.webserverConfig.auth.basicAuth.enabled) {
                     dynamicAuth.unuse(authMiddleware);
                     this.basicAuthInUse = false;
                 } else if (!this.basicAuthInUse && (this.webserverConfig.auth.basicAuth.enabled && !this.webserverConfig.auth.sso.oidc.enabled)) {
@@ -243,7 +249,7 @@ class WebServer {
     createAuthMiddleware() {
         const basicAuthMiddleware = basicAuth({
             authorizer: (username, password) => {
-                const basicAuthConf = this.config.get("webserver").auth.basicAuth;
+                const basicAuthConf = this.config.get("webserver").basicAuth;
 
                 const userMatches = basicAuth.safeCompare(username, basicAuthConf.username);
                 const passwordMatches = basicAuth.safeCompare(password, basicAuthConf.password);

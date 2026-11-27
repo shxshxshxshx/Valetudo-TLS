@@ -5,13 +5,14 @@
   "bin": "index.js",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=16"
+    "node": "^20.19.0 || ^22.12.0 || >=23.0.0"
   },
   "pkg": {
     "assets": [
       "../frontend/build",
       "../build_metadata.json",
       "./lib/webserver/middlewares/res/egg_term.html",
+      "./lib/res/express-openid-connect.cjs",
       "../node_modules/swagger-ui-dist/swagger-ui.css",
       "./node_modules/swagger-ui-dist/swagger-ui.css"
     ]
@@ -25,7 +26,7 @@
     "ts-check": "tsc --noEmit",
     "test": "node --test \"test/**/*_test.js\"",
     "prepare_commit": "npm run lint_fix && npm run ts-check && npm run test",
-    "generate_code": "npm run generate_midea_protobufs",
+    "generate_code": "npm run generate_midea_protobufs && npm run generate_oidc_bundle --prefix=..",
     "generate_midea_protobufs": "pbjs --es5 ./lib/robots/midea/generated/midea_protobufs.js ../assets/protobuf/midea.proto",
     "pre_build": "npm run generate_code && node ../util/generate_build_metadata.js",
     "build": "npm run build_armv7 && npm run build_aarch64 && npm run build_armv7_lowmem",
@@ -46,7 +47,7 @@
     "express": "5.2.1",
     "express-basic-auth": "1.2.1",
     "express-dynamic-middleware": "1.0.0",
-    "express-openid-connect": "^2.17.1",
+    "express-openid-connect": "3.4.0",
     "express-rate-limit": "8.2.1",
     "hashlru": "git+https://npm@github.com/Hypfer/hashlru#3.0.0",
     "is-in-subnet": "4.0.1",
@@ -71,6 +72,6 @@
     "@types/semaphore": "1.1.4",
     "@types/uuid": "10.0.0",
     "@yao-pkg/pkg": "6.6.0",
-  "cross-env": "10.1.0"
+    "cross-env": "10.1.0"
   }
 }

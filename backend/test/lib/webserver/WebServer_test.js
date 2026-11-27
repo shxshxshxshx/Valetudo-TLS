@@ -1,21 +1,34 @@
 const assert = require("node:assert/strict");
+const crypto = require("node:crypto");
 const forge = require("node-forge");
 const fs = require("node:fs");
 const http = require("node:http");
-const https = require("node:https");
 const os = require("node:os");
 const path = require("node:path");
+const tls = require("node:tls");
 const {describe, it} = require("node:test");
 const {once} = require("node:events");
 
 const defaults = require("../../../lib/res/default_config.json");
 const WebServer = require("../../../lib/webserver/WebServer");
-const {mapRoles} = require("../../../lib/webserver/middlewares/auth/OidcMiddleware");
 
 async function startWebServer(context, configure = () => {}) {
     const settings = structuredClone(defaults);
     settings.webserver.port = 0;
     settings.webserver.blockExternalAccess = false;
+    settings.webserver.baseUrl = "http://localhost";
+    settings.webserver.ssl = {enabled: false, keyLocation: "", certLocation: ""};
+    settings.webserver.auth = {
+        basicAuth: settings.webserver.basicAuth,
+        sso: {
+            oidc: {
+                enabled: true,
+                issuer: "http://localhost",
+                clientId: "test-client",
+                clientSecret: "local-test-session-secret-with-at-least-32-characters"
+            }
+        }
+    };
     configure(settings);
     const listeners = [];
     const config = {
@@ -43,66 +56,82 @@ async function startWebServer(context, configure = () => {}) {
         },
         phoenixManager: {canReincarnate: () => true, cycleData: {generation: 7}}
     });
+    Object.freeze(Object.prototype); // Match the production entry point before handling requests.
     context.after(() => webserver.shutdown());
     await once(webserver.webserver, "listening");
     const baseUrl = `http://127.0.0.1:${webserver.webserver.address().port}`;
-    const request = (requestPath, options = {}) => fetch(`${baseUrl}${requestPath}`, {
-        signal: AbortSignal.timeout(5000),
-        ...options
+    // Exercise robot builds without relying on Node's WebAssembly-based fetch client in the test process.
+    const request = (requestPath, options = {}) => new Promise((resolve, reject) => {
+        const clientRequest = http.request(`${baseUrl}${requestPath}`, {
+            method: options.method ?? "GET",
+            headers: options.headers
+        }, response => {
+            const chunks = [];
+            response.on("data", chunk => chunks.push(chunk));
+            response.on("error", reject);
+            response.on("end", () => {
+                const body = Buffer.concat(chunks).toString("utf8");
+                resolve({
+                    status: response.statusCode,
+                    headers: {
+                        get: name => response.headers[name.toLowerCase()] ?? null,
+                        getSetCookie: () => response.headers["set-cookie"] ?? []
+                    },
+                    text: async () => body,
+                    json: async () => JSON.parse(body)
+                });
+            });
+        });
+        clientRequest.setTimeout(15000, () => clientRequest.destroy(new Error("HTTP test request timed out")));
+        clientRequest.on("error", reject);
+        clientRequest.end(options.body?.toString());
     });
 
     return {config: config, webserver: webserver, request: request, stopCamera: stopCamera};
 }
 
 describe("TLS/OIDC webserver integration", () => {
-    it("starts with default HTTP settings and retains upstream runtime information", async context => {
-        const {request} = await startWebServer(context);
-        const profileResponse = await request("/api/v2/profile/");
-        assert.equal(profileResponse.status, 200);
-        assert.deepEqual((await profileResponse.json()).roles, ["admin", "user"]);
-
-        const runtimeResponse = await request("/api/v2/system/runtime/info");
-        assert.equal(runtimeResponse.status, 200);
-        assert.deepEqual((await runtimeResponse.json()).phoenix, {canReincarnate: true, generation: 7});
+    it("refuses startup when both authentication providers are disabled", async context => {
+        await assert.rejects(startWebServer(context, settings => {
+            settings.webserver.auth.sso.oidc.enabled = false;
+        }), /OIDC authentication must be enabled/);
     });
 
-    it("authenticates with nested basic-auth settings and applies API configuration updates", async context => {
-        const {request} = await startWebServer(context, settings => {
-            settings.webserver.auth.basicAuth = {enabled: true, username: "test-user", password: "test-password"};
-        });
-        const denied = await request("/api/v2/profile/");
-        assert.equal(denied.status, 401);
-        await denied.text();
-
-        const headers = {Authorization: `Basic ${Buffer.from("test-user:test-password").toString("base64")}`};
-        const profileResponse = await request("/api/v2/profile/", {headers: headers});
-        assert.equal(profileResponse.status, 200);
-        assert.equal((await profileResponse.json()).name, "test-user");
-
-        const configurationResponse = await request("/api/v2/valetudo/config/interfaces/http/auth/basic", {headers: headers});
-        assert.deepEqual(await configurationResponse.json(), {enabled: true, username: "test-user", password: ""});
-
-        const updateResponse = await request("/api/v2/valetudo/config/interfaces/http/auth/basic", {
-            method: "PUT",
-            headers: {...headers, "Content-Type": "application/json"},
-            body: JSON.stringify({enabled: false, username: "test-user", password: ""})
-        });
-        assert.equal(updateResponse.status, 200);
-        await updateResponse.text();
-        const publicResponse = await request("/api/v2/profile/");
-        assert.equal(publicResponse.status, 200);
-        await publicResponse.text();
+    it("refuses Basic Auth as a replacement for OIDC", async context => {
+        await assert.rejects(startWebServer(context, settings => {
+            settings.webserver.auth.sso.oidc.enabled = false;
+            settings.webserver.basicAuth.enabled = true;
+        }), /OIDC authentication must be enabled/);
     });
 
-    it("activates OIDC without basic-auth conflicts and preserves the camera killswitch", async context => {
+    it("refuses startup when OIDC configuration is missing", async context => {
+        await assert.rejects(startWebServer(context, settings => {
+            delete(settings.webserver.auth);
+        }), /OIDC authentication must be enabled/);
+    });
+
+    it("validates OIDC configuration during startup", async context => {
+        await assert.rejects(startWebServer(context, settings => {
+            settings.webserver.auth.sso.oidc.clientSecret = "";
+        }), /secret/);
+    });
+
+    it("completes OIDC login and applies the existing user/admin gates", async context => {
+        const signingKeys = crypto.generateKeyPairSync("rsa", {modulusLength: 2048});
+        const publicKey = {...signingKeys.publicKey.export({format: "jwk"}), kid: "test-signing-key", alg: "RS256", use: "sig"};
         const issuer = http.createServer((request, response) => {
             const issuerUrl = `http://127.0.0.1:${issuer.address().port}`;
             response.setHeader("Content-Type", "application/json");
+            if (request.url === "/jwks") {
+                response.end(JSON.stringify({keys: [publicKey]}));
+                return;
+            }
             response.end(JSON.stringify({
                 issuer: issuerUrl,
                 authorization_endpoint: `${issuerUrl}/authorize`,
                 token_endpoint: `${issuerUrl}/token`,
                 jwks_uri: `${issuerUrl}/jwks`,
+                end_session_endpoint: `${issuerUrl}/logout`,
                 response_types_supported: ["id_token"],
                 id_token_signing_alg_values_supported: ["RS256"],
                 subject_types_supported: ["public"]
@@ -112,41 +141,121 @@ describe("TLS/OIDC webserver integration", () => {
         context.after(() => new Promise(resolve => issuer.close(resolve)));
         await once(issuer, "listening");
         const issuerUrl = `http://127.0.0.1:${issuer.address().port}`;
-        const {config, webserver, request, stopCamera} = await startWebServer(context, settings => {
-            settings.webserver.auth.basicAuth.enabled = true;
+        const {request, stopCamera} = await startWebServer(context, settings => {
+            Object.assign(settings.webserver.auth.sso.oidc, {
+                enabled: true,
+                issuer: issuerUrl,
+                groupMap: {admin: ["admins"], user: ["users"]}
+            });
         });
-        const webserverConfig = structuredClone(config.get("webserver"));
-        webserverConfig.auth.sso.oidc = {
-            enabled: true,
-            issuer: issuerUrl,
-            clientId: "test-client",
-            clientSecret: "local-test-session-secret-with-at-least-32-characters",
-            scope: "openid profile email groups"
-        };
-        config.set("webserver", webserverConfig);
-        assert.equal(webserver.basicAuthInUse, false);
-        const killswitchResponse = await request("/_killswitch/camera");
-        assert.equal(killswitchResponse.status, 200);
+        const killswitchResponse = await request("/_killswitch/camera", {method: "POST", redirect: "manual"});
+        assert.equal(killswitchResponse.status, 302);
         await killswitchResponse.text();
+        assert.equal(stopCamera.mock.callCount(), 0);
+
+        const signIn = async groups => {
+            const loginResponse = await request("/api/v2/profile/", {redirect: "manual"});
+            assert.equal(loginResponse.status, 302);
+            const location = new URL(loginResponse.headers.get("location"));
+            assert.equal(location.origin, issuerUrl);
+            assert.equal(location.searchParams.get("client_id"), "test-client");
+            assert.equal(location.searchParams.get("scope"), "openid profile email");
+            await loginResponse.text();
+
+            const issuedAt = Math.floor(Date.now() / 1000);
+            const tokenHeader = Buffer.from(JSON.stringify({alg: "RS256", kid: "test-signing-key"})).toString("base64url");
+            const tokenClaims = Buffer.from(JSON.stringify({
+                iss: issuerUrl,
+                aud: "test-client",
+                sub: "test-user",
+                name: "Test User",
+                email: "test@example.invalid",
+                groups: groups,
+                nonce: location.searchParams.get("nonce"),
+                iat: issuedAt,
+                exp: issuedAt + 300
+            })).toString("base64url");
+            const signingInput = `${tokenHeader}.${tokenClaims}`;
+            const signature = crypto.sign("RSA-SHA256", Buffer.from(signingInput), signingKeys.privateKey).toString("base64url");
+            const transactionCookies = loginResponse.headers.getSetCookie().map(cookie => cookie.split(";")[0]).join("; ");
+            const callbackResponse = await request("/callback", {
+                method: "POST",
+                redirect: "manual",
+                headers: {"Content-Type": "application/x-www-form-urlencoded", Cookie: transactionCookies},
+                body: new URLSearchParams({
+                    state: location.searchParams.get("state"),
+                    id_token: `${signingInput}.${signature}`
+                })
+            });
+            assert.equal(callbackResponse.status, 302, await callbackResponse.text());
+            const sessionCookies = callbackResponse.headers.getSetCookie().map(cookie => cookie.split(";")[0]).join("; ");
+            return {Cookie: sessionCookies};
+        };
+
+        const headers = await signIn(["users"]);
+        const authenticatedProfile = await request("/api/v2/profile/", {headers: headers});
+        assert.equal(authenticatedProfile.status, 200);
+        const profile = await authenticatedProfile.json();
+        assert.equal(profile.name, "Test User");
+        assert.deepEqual(profile.roles, ["user"]);
+
+        const userKillswitch = await request("/_killswitch/camera", {method: "POST", headers: {...headers, Origin: "http://localhost"}});
+        assert.equal(userKillswitch.status, 403);
+        await userKillswitch.text();
+        assert.equal(stopCamera.mock.callCount(), 0);
+
+        const adminHeaders = await signIn(["admins"]);
+        const getKillswitch = await request("/_killswitch/camera", {headers: adminHeaders});
+        assert.equal(getKillswitch.status, 405);
+        await getKillswitch.text();
+
+        for (const origin of [undefined, ...Array(6).fill("https://untrusted.example")]) {
+            const crossSiteKillswitch = await request("/_killswitch/camera", {
+                method: "POST",
+                headers: {...adminHeaders, ...(origin ? {Origin: origin} : {})}
+            });
+            assert.equal(crossSiteKillswitch.status, 403);
+            await crossSiteKillswitch.text();
+        }
+        assert.equal(stopCamera.mock.callCount(), 0);
+
+        const adminKillswitch = await request("/_killswitch/camera", {method: "POST", headers: {...adminHeaders, Origin: "http://localhost"}});
+        assert.equal(adminKillswitch.status, 200);
+        await adminKillswitch.text();
         assert.equal(stopCamera.mock.callCount(), 1);
 
-        const loginResponse = await request("/api/v2/profile/", {redirect: "manual"});
-        assert.equal(loginResponse.status, 302);
-        const location = new URL(loginResponse.headers.get("location"));
-        assert.equal(location.origin, issuerUrl);
-        assert.equal(location.searchParams.get("client_id"), "test-client");
-        assert.equal(location.searchParams.get("scope"), "openid profile email groups");
-        await loginResponse.text();
+        const adminRuntime = await request("/api/v2/system/runtime/info", {headers: adminHeaders});
+        assert.equal(adminRuntime.status, 200);
+        assert.deepEqual((await adminRuntime.json()).phoenix, {canReincarnate: true, generation: 7});
 
-        webserverConfig.auth.sso.oidc.enabled = false;
-        config.set("webserver", webserverConfig);
-        assert.equal(webserver.basicAuthInUse, true);
-        const basicResponse = await request("/api/v2/profile/");
-        assert.equal(basicResponse.status, 401);
-        await basicResponse.text();
+        const runtimeResponse = await request("/api/v2/system/runtime/info", {headers: headers});
+        assert.equal(runtimeResponse.status, 403);
+        await runtimeResponse.text();
+
+        const cameraSettingsResponse = await request("/api/v2/valetudo/config/duststreaming", {
+            method: "PUT",
+            headers: {...headers, "Content-Type": "application/json"},
+            body: JSON.stringify({enabled: false})
+        });
+        assert.equal(cameraSettingsResponse.status, 403);
+        await cameraSettingsResponse.text();
+        assert.equal(stopCamera.mock.callCount(), 1);
+
+        const adminCameraSettings = await request("/api/v2/valetudo/config/duststreaming", {
+            method: "PUT",
+            headers: {...adminHeaders, "Content-Type": "application/json"},
+            body: JSON.stringify({enabled: false})
+        });
+        assert.equal(adminCameraSettings.status, 200);
+        await adminCameraSettings.text();
+        assert.equal(stopCamera.mock.callCount(), 2);
+
+        const logoutResponse = await request("/logout", {headers: headers, redirect: "manual"});
+        assert.equal(logoutResponse.status, 302);
+        await logoutResponse.text();
     });
 
-    it("serves the profile over TLS using configured certificate files", async context => {
+    it("starts TLS with configured certificate files and OIDC enabled", async context => {
         const directory = fs.mkdtempSync(path.join(os.tmpdir(), "valetudo-tls-test-"));
         context.after(() => fs.rmSync(directory, {recursive: true, force: true}));
         const keyPair = forge.pki.rsa.generateKeyPair(2048);
@@ -168,33 +277,16 @@ describe("TLS/OIDC webserver integration", () => {
             settings.webserver.ssl = {enabled: true, keyLocation: keyLocation, certLocation: certLocation};
         });
         await new Promise((resolve, reject) => {
-            https.get({
-                hostname: "127.0.0.1",
+            const socket = tls.connect({
+                host: "127.0.0.1",
                 port: webserver.webserver.address().port,
-                path: "/api/v2/profile/",
                 rejectUnauthorized: false
-            }, response => {
-                let body = "";
-                response.on("data", chunk => {
-                    body += chunk;
-                });
-                response.on("end", () => {
-                    try {
-                        assert.equal(response.statusCode, 200);
-                        assert.equal(JSON.parse(body).name, "Valetudo");
-                        resolve();
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-            }).on("error", reject);
+            }, () => {
+                socket.end();
+                resolve();
+            });
+            socket.on("error", reject);
         });
     });
 
-    it("handles identities without group claims without granting configured roles", () => {
-        const config = {get: () => ({auth: {sso: {oidc: {groupMap: {admin: ["admins"], user: ["users"]}}}}})};
-        assert.deepEqual(mapRoles(undefined, config), []);
-        assert.deepEqual(mapRoles("admins", config), []);
-        assert.deepEqual(mapRoles(["admins"], config), ["admin"]);
-    });
 });

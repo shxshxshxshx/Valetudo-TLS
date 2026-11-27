@@ -80,16 +80,6 @@ class Configuration {
                 const config = fs.readFileSync(this.location, {"encoding": "utf-8"}).toString();
                 const parsedConfig = JSON.parse(config);
 
-                if (parsedConfig.webserver) {
-                    if (parsedConfig.webserver.basicAuth) {
-                        parsedConfig.webserver.auth = parsedConfig.webserver.auth ?? {};
-                        parsedConfig.webserver.auth.basicAuth = parsedConfig.webserver.auth.basicAuth ?? parsedConfig.webserver.basicAuth;
-                        delete(parsedConfig.webserver.basicAuth);
-                    }
-
-                    parsedConfig.webserver = nestedObjectAssign({}, DEFAULT_SETTINGS.webserver, parsedConfig.webserver);
-                }
-
                 if (parsedConfig._version !== Tools.GET_VALETUDO_VERSION()) {
                     Logger.info(`Migrating config from ${parsedConfig._version} to ${Tools.GET_VALETUDO_VERSION()}`);
 

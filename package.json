@@ -4,7 +4,7 @@
   "description": "Self-contained control webinterface for vacuum robots",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=20"
+    "node": "^22.15.0 || >=23.0.0"
   },
   "author": "",
   "workspaces": [
@@ -24,13 +24,16 @@
     "generate_changelog": "npx auto-changelog --commit-limit false --tag-pattern .+ --handlebars-setup ./util/res/auto_changelog_handlebars_helpers.js --template ./util/res/auto_changelog_template.hbs --output ./build/changelog.md",
     "generate_nightly_changelog": "npx auto-changelog --commit-limit false --tag-pattern .+ --unreleased-only --handlebars-setup ./util/res/auto_changelog_handlebars_helpers.js --template ./util/res/auto_changelog_template.hbs --output ./build/changelog_nightly.md",
     "generate_eslintrc_flavors": "node util/generate_eslintrc_flavors.js",
-
+    "generate_oidc_bundle": "node util/generate_oidc_bundle.js",
     "postinstall": "patch-package"
   },
   "devDependencies": {
+    "@babel/core": "7.28.6",
+    "@babel/plugin-transform-unicode-property-regex": "7.23.3",
     "@typescript-eslint/eslint-plugin": "6.15.0",
     "@typescript-eslint/experimental-utils": "5.62.0",
     "@typescript-eslint/parser": "6.15.0",
+    "@whatwg-node/node-fetch": "0.9.4",
     "auto-changelog": "2.5.0",
     "eslint": "8.56.0",
     "eslint-plugin-jsdoc": "50.2.4",
@@ -45,6 +48,7 @@
     "swagger-jsdoc": "git+https://npm@github.com/Hypfer/swagger-jsdoc.git#7.0.0-rc.6-noyaml-monorepo-fix",
     "swagger-parser": "10.0.3",
     "typescript": "4.8.4",
-    "upx": "git+https://npm@github.com/Hypfer/upx#1.0.11"
+    "upx": "git+https://npm@github.com/Hypfer/upx#1.0.11",
+    "webpack": "5.104.1"
   }
 }

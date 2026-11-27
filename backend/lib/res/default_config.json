@@ -6,27 +6,10 @@
     },
     "webserver": {
         "port": 80,
-        "baseUrl": "http://localhost",
-        "ssl": {
+        "basicAuth": {
             "enabled": false,
-            "keyLocation": "",
-            "certLocation": ""
-        },
-        "auth": {
-            "basicAuth": {
-                "enabled": false,
-                "username": "valetudo",
-                "password": "valetudo"
-            },
-            "sso": {
-                "oidc": {
-                    "enabled": false,
-                    "issuer": "",
-                    "clientId": "",
-                    "clientSecret": "",
-                    "scope": "openid profile email"
-                }
-            }
+            "username": "valetudo",
+            "password": "valetudo"
         },
         "blockExternalAccess": true
     },
